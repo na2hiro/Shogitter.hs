@@ -1,0 +1,24 @@
+name:                 ShogitterHS
+version:              0.1.0.0
+synopsis:             
+-- description:
+-- license:
+-- license-file:
+homepage:             
+author:               na2hiro
+maintainer:           a@81.la
+category:             
+-- copyright:
+build-type:           Simple
+-- extra-source-files:
+cabal-version:        >=1.10
+
+executable ShogitterHS
+  main-is:              Main.hs
+  -- other-modules:
+  -- other-extensions:
+  build-depends:        base >= 4.7 && < 5,
+                        containers >= 0.5.6.2,
+                        array >= 0.5.1.0
+  hs-source-dirs:       src
+  default-language:     Haskell2010
