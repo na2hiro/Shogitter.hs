@@ -2,9 +2,10 @@ module Shogi where
 
 import Board
 import Piece
-import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey)
+import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey, keys)
 import Control.Arrow((***))
 import Control.Monad(guard, liftM2)
+import Data.Array(indices)
 import Data.Functor.Identity
 
 type Hand = Map Kind Int
@@ -16,6 +17,13 @@ instance Show Shogi where
     show (Shogi turn board hands) = show board ++ showHands hands ++ show turn ++ "\n"
         where showHands (b,w) = showHand Black b ++ showHand White w
               showHand c hand = "P" ++ show c ++ foldrWithKey (\kind num str->str++(concat. replicate num$ "00"++show kind)) "" hand ++ "\n"
+
+kindsHand :: Color -> Hands -> [Kind]
+kindsHand color = keys. getHand color
+
+getHand :: Color -> Hands -> Hand
+getHand Black = fst
+getHand _ = snd
 
 initialShogi :: Shogi
 initialShogi = Shogi Black initialBoard (empty, empty)
@@ -49,7 +57,17 @@ removeFromHands :: Color -> Kind -> Hands -> Maybe Hands
 removeFromHands color = applyHandM color. removeFromHand
 
 getMoves :: Shogi -> [Move]
-getMoves (Shogi turn _ _) = error "getMoves"
+getMoves (Shogi turn board@(Board arr) hands) = do
+    from <- indices arr
+    case get from board of
+        Nothing -> map (Put from) kinds
+        Just (Piece color _ _) -> do
+            guard$ color == turn
+            dest <- destinationsAt from board
+            if canPromote color board from || canPromote color board dest
+                then map (Move from dest) [True,False]
+                else return$ Move from dest False
+    where kinds = kindsHand turn hands
 
 getNext :: Shogi -> [Shogi]
 getNext board = [unsafeDoMove move board | move <- getMoves board]

@@ -1,4 +1,4 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote, opposite) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote, opposite, addCoord) where
 
 type Coord = (Int, Int)
 type Promoted = Bool
@@ -8,6 +8,10 @@ data Color = Black | White deriving (Eq)
 instance Show Color where
     show Black = "+"
     show White = "-"
+
+addCoord :: Color -> Coord -> Coord -> Coord
+addCoord Black (x,y) (a,b) = (a+x,b+y)
+addCoord White (x,y) (a,b) = (a-x,b-y)
 
 opposite :: Color -> Color
 opposite Black = White

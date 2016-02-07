@@ -5,7 +5,7 @@ import Board
 import Piece(Kind(FU))
 
 main :: IO ()
-main = putStrLn$ concatMap show [te0, te1, te2, te3, te4]
+main = putStrLn$ concatMap show [te0, te1, te2, te3, te4]++show (getMoves te2) ++ show (getNext te2)
     where te0 = initialShogi
           te1 = unsafeDoMove (Move (7,7) (7,1) True) te0
           te2 = unsafeDoMove (Move (6,1) (7,1) False) te1
