@@ -1,38 +1,30 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote, opposite, addCoord) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote) where
 
-type Coord = (Int, Int)
+import Color(Color(..))
+import Coord
+
 type Promoted = Bool
 data MoveDef = Exact Coord
           | Slide Coord deriving (Eq, Show)
-data Color = Black | White deriving (Eq)
-instance Show Color where
-    show Black = "+"
-    show White = "-"
-
-addCoord :: Color -> Coord -> Coord -> Coord
-addCoord Black (x,y) (a,b) = (a+x,b+y)
-addCoord White (x,y) (a,b) = (a-x,b-y)
-
-opposite :: Color -> Color
-opposite Black = White
-opposite White = Black
 
 data Kind = FU | KY | KE | GI | KI | KA | HI | OU deriving (Show, Ord, Eq, Enum)
 
 kin :: [MoveDef]
-kin = [Exact (-1, -1), Exact (0, -1), Exact (1, -1), Exact (-1, 0), Exact (1, 0), Exact (0, 1)]
+kin = map Exact [forwardRight, forward, forwardLeft, right, left, backward]
+ex = [forwardRight, forwardLeft, backwardRight, backwardLeft]
+plus = [forward, right, left, backward]
 
 move :: Kind -> Promoted -> [MoveDef]
-move FU False = [Exact (0, -1)]
-move KY False = [Slide (0, -1)]
-move KE False = [Exact (1, -2), Exact (-1, -2)]
-move GI False = [Exact (-1, -1), Exact (0, -1), Exact (1, -1), Exact (-1, 1), Exact (1, 1)]
+move FU False = [Exact forward]
+move KY False = [Slide forward]
+move KE False = map Exact [forwardRight+forward, forwardLeft+forward]
+move GI False = map Exact [forwardRight, forward, forwardLeft, backwardRight, backwardLeft]
 move KI False = kin
-move KA False = [Slide (-1, -1), Slide (1, -1), Slide (-1, 1), Slide (1, 1)]
-move KA True = [Slide (-1, -1), Slide (1, -1), Slide (-1, 1), Slide (1, 1), Exact (-1, 0), Exact (0, -1), Exact (0, 1), Exact (1, 0)]
-move HI False = [Slide (-1, 0), Slide (0, -1), Slide (0, 1), Slide (1, 0)]
-move HI True = [Slide (-1, 0), Slide (0, -1), Slide (0, 1), Slide (1, 0), Exact (-1, -1), Exact (1, -1), Exact (-1, 1), Exact (1, 1)]
-move OU False = [Exact (-1, -1), Exact (1, -1), Exact (-1, 1), Exact (1, 1), Exact (-1, 0), Exact (0, -1), Exact (0, 1), Exact (1, 0)]
+move KA False = map Slide ex
+move KA True = map Slide ex ++ map Exact plus
+move HI False = map Slide plus
+move HI True = map Slide plus ++ map Exact ex
+move OU False = map Exact (plus++ex)
 move _ True = kin
 
 data Piece = Piece Color Promoted Kind deriving (Eq)

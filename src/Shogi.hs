@@ -2,64 +2,23 @@ module Shogi where
 
 import Board
 import Piece
-import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey, keys)
-import Control.Arrow((***))
-import Control.Monad(guard, liftM2)
-import Data.Array(indices)
-import Data.Functor.Identity
+import Hands
+import Color
+import Control.Monad(guard)
 
-type Hand = Map Kind Int
 type Turn = Color
-type Hands = (Hand, Hand)
 
 data Shogi = Shogi Turn Board Hands deriving (Eq)
 instance Show Shogi where
-    show (Shogi turn board hands) = show board ++ showHands hands ++ show turn ++ "\n"
-        where showHands (b,w) = showHand Black b ++ showHand White w
-              showHand c hand = "P" ++ show c ++ foldrWithKey (\kind num str->str++(concat. replicate num$ "00"++show kind)) "" hand ++ "\n"
-
-kindsHand :: Color -> Hands -> [Kind]
-kindsHand color = keys. getHand color
-
-getHand :: Color -> Hands -> Hand
-getHand Black = fst
-getHand _ = snd
+    show (Shogi turn board hands) = show board ++ show hands ++ show turn ++ "\n"
 
 initialShogi :: Shogi
-initialShogi = Shogi Black initialBoard (empty, empty)
-
-applyHand :: Color -> (Hand -> Hand) -> Hands -> Hands
-applyHand color f = runIdentity. applyHandM color (Identity. f)
-
-applyHandM :: Monad m => Color -> (Hand -> m Hand) -> Hands -> m Hands
-applyHandM Black f = liftTuple. (f *** return)
-applyHandM White f = liftTuple. (return *** f)
-
-liftTuple :: Monad m => (m a, m b) -> m (a, b)
-liftTuple = uncurry$ liftM2 (,)
-
-addToHand :: Kind -> Hand -> Hand
-addToHand kind hand = case M.lookup kind hand of
-                        Nothing -> insert kind 1 hand
-                        Just n -> insert kind (n+1) hand
-
-removeFromHand :: Kind -> Hand -> Maybe Hand
-removeFromHand kind hand = do
-    n <- M.lookup kind hand
-    return$ if n==1
-        then delete kind hand
-        else insert kind (n-1) hand
-
-addToHands :: Color -> Kind -> Hands -> Hands
-addToHands color = applyHand color. addToHand
-
-removeFromHands :: Color -> Kind -> Hands -> Maybe Hands
-removeFromHands color = applyHandM color. removeFromHand
+initialShogi = Shogi Black initialBoard initialHands
 
 getMoves :: Shogi -> [Move]
-getMoves (Shogi turn board@(Board arr) hands) = do
-    from <- indices arr
-    case get from board of
+getMoves (Shogi turn board hands) = do
+    (from, piece) <- cells board
+    case piece of
         Nothing -> map (Put from) kinds
         Just (Piece color _ _) -> do
             guard$ color == turn
