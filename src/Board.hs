@@ -1,7 +1,7 @@
 module Board where
 
 import Piece(Piece(..), Kind(..), Coord, Color(..), Promoted, move, MoveDef(..))
-import Coord(Coord(..), getX, getY, toTuple)
+import Coord(Coord(..), getX, getY)
 import Data.Array.IArray(Array, listArray, (!), (//), bounds, indices, assocs)
 import Data.List(transpose)
 import Data.Ix as Ix(inRange)

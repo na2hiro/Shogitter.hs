@@ -2,6 +2,7 @@ module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move,
 
 import Color(Color(..))
 import Coord
+import Coord.Const
 
 type Promoted = Bool
 data MoveDef = Exact Coord
