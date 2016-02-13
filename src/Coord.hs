@@ -1,7 +1,8 @@
 -- | Coordinate of pieces on boards
-module Coord(Coord(..), getX, getY) where
+module Coord(Coord(..), getX, getY, direct) where
 
 import Data.Ix
+import Color(Color(..))
 
 -- | Coordinate of pieces on boards
 data Coord = Coord Int Int deriving (Eq, Ord)
@@ -43,6 +44,17 @@ getX (Coord x _) = x
 -- 5
 getY :: Coord -> Int
 getY (Coord _ y) = y
+
+-- |
+-- Direct to color's side
+--
+-- >>> direct Black (Coord 3 5) == Coord 3 5
+-- True
+-- >>> direct White (Coord 3 5) == Coord (-3) (-5)
+-- True
+direct :: Color -> Coord -> Coord
+direct Black c = c
+direct White c = -c
 
 -- |
 -- From Coord to tuple

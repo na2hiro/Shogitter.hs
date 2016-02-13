@@ -1,12 +1,20 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote, uniqueMoveDef) where
 
 import Color(Color(..))
 import Coord
 import Coord.Const
+import Data.List(sort)
 
 type Promoted = Bool
 data MoveDef = Exact Coord
           | Slide Coord deriving (Eq, Show)
+
+instance Ord MoveDef where
+    md1 <= md2 = getCoord md1 <= getCoord md2
+
+getCoord :: MoveDef -> Coord
+getCoord (Exact c) = c
+getCoord (Slide c) = c
 
 data Kind = FU | KY | KE | GI | KI | KA | HI | OU deriving (Show, Ord, Eq, Enum)
 
@@ -43,3 +51,15 @@ showKind True GI = "NG"
 showKind True KA = "UM"
 showKind True HI = "RY"
 
+uniqueMoveDef :: [MoveDef] -> [MoveDef]
+uniqueMoveDef a = uniq$ sort a
+    where uniq [] = []
+          uniq [x] = [x]
+          uniq (x:y:xs) = if sameC x y
+              then case x of
+                Exact _ ->uniq (y:xs)
+                _ -> uniq (x:xs)
+              else x:uniq(y:xs)
+          sameC md1 md2 = getCoord md1 == getCoord md2
+          isExact (Exact _) = True
+          isExact _ = False
