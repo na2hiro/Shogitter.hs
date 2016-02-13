@@ -1,0 +1,5 @@
+.idea/
+.stack-work/
+ShogitterHS.iml
+dist/
+**/*.prof
