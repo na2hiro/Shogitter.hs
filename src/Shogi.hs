@@ -3,6 +3,7 @@ module Shogi where
 
 import Board
 import Board.AbilityProxy(NormalAbilityProxy)
+import Board.Slicer(NormalSlicer)
 import Piece
 import Hands
 import Color
@@ -10,19 +11,19 @@ import Control.Monad(guard)
 
 type Turn = Color
 
-data Shogi a where
-    Shogi :: AbilityProxy a => Turn -> Board a -> Hands -> Shogi a
-instance Eq (Shogi a) where
+data Shogi a s where
+    Shogi :: (AbilityProxy a, Slicer s) => Turn -> Board a s -> Hands -> Shogi a s
+instance Eq (Shogi a s) where
     Shogi t b h == Shogi t' b' h' = t==t' && b==b' && h==h'
-instance Show (Shogi a) where
+instance Show (Shogi a s) where
     show (Shogi turn board hands) = show board ++ show hands ++ show turn ++ "\n"
 
-type NormalShogi = Shogi NormalAbilityProxy
+type NormalShogi = Shogi NormalAbilityProxy NormalSlicer
 
-initialShogi :: AbilityProxy a => Shogi a
+initialShogi :: (AbilityProxy a, Slicer s) => Shogi a s
 initialShogi = Shogi Black initialBoard initialHands
 
-getMoves :: Shogi a -> [Move]
+getMoves :: Shogi a s -> [Move]
 getMoves (Shogi turn board hands) = do
     (from, piece) <- cells board
     case piece of
@@ -35,10 +36,10 @@ getMoves (Shogi turn board hands) = do
                 else return$ Move from dest False
     where kinds = kindsHand turn hands
 
-getNext :: Shogi a -> [Shogi a]
+getNext :: Shogi a s -> [Shogi a s]
 getNext board = [unsafeDoMove move board | move <- getMoves board]
 
-unsafeDoMove :: Move -> Shogi a -> Shogi a
+unsafeDoMove :: Move -> Shogi a s -> Shogi a s
 unsafeDoMove (Move from to promoted) (Shogi turn board hands) = Shogi turn' board' hands'
     where Just fromPiece =  get from board
           fromPiece' = Just$ promote promoted fromPiece
@@ -51,7 +52,7 @@ unsafeDoMove (Put to kind) (Shogi turn board hands) = Shogi (opposite turn) boar
     where Just hands' = removeFromHands turn kind hands
           board' = set (to, Just$ Piece turn False kind) board
 
-doMove :: Move -> Shogi a -> Maybe (Shogi a)
+doMove :: Move -> Shogi a s -> Maybe (Shogi a s)
 doMove (Move from to promoted) (Shogi turn board hands) = do
     guard$ board `inRange` from
     guard$ board `inRange` to

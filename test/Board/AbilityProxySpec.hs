@@ -3,13 +3,16 @@ module Board.AbilityProxySpec where
 import Test.Hspec
 import Board(Board(..), destinationsAt, initialArray, sets, initialBoard)
 import Board.AbilityProxy
+import Board.Slicer
 import Coord(Coord(..))
 import Color(Color(..))
 import Piece(Piece(..), Kind(..))
 
+type NBoard a = Board a NormalSlicer
+
 spec :: Spec
 spec = do
-    describe "Annan destinationsAt"$ let b = initialBoard :: Board AnnanAbilityProxy in do
+    describe "Annan destinationsAt"$ let b = initialBoard :: NBoard AnnanAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6, Coord 2 5, Coord 2 4, Coord 2 3]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -17,7 +20,7 @@ spec = do
         it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList` [Coord 9 4, Coord 7 4]
         it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` [Coord 1 4, Coord 3 4]
 
-    describe "Anhoku destinationsAt"$ let b = initialBoard :: Board AnhokuAbilityProxy in do
+    describe "Anhoku destinationsAt"$ let b = initialBoard :: NBoard AnhokuAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -27,7 +30,7 @@ spec = do
 
     describe "Antouzai destinationsAt"$
         let diffs = [(Coord 7 1, Nothing), (Coord 7 2, Just$ Piece White False GI)]
-            b = sets diffs$ initialBoard :: Board AntouzaiAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard AntouzaiAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -39,7 +42,7 @@ spec = do
 
     describe "Anki destinationsAt"$
         let diffs = [(Coord 7 1, Nothing), (Coord 7 2, Just$ Piece White False GI)]
-            b = sets diffs$ initialBoard :: Board AnkiAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard AnkiAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList`
             [Coord 8 6, Coord 7 6, Coord 6 6, Coord 7 8, Coord 8 5, Coord 6 5]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList`
@@ -49,7 +52,7 @@ spec = do
         it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList` [Coord 9 2]
         it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` [Coord 1 2, Coord 3 2]
 
-    describe "Tenjiku destinationsAt"$ let b = initialBoard :: Board TenjikuAbilityProxy in do
+    describe "Tenjiku destinationsAt"$ let b = initialBoard :: NBoard TenjikuAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6, Coord 2 5, Coord 2 4, Coord 2 3]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -60,7 +63,7 @@ spec = do
 
     describe "Nekosen destinationsAt"$
         let diffs = [(Coord 8 3, Just$ Piece Black False FU)]
-            b = sets diffs$ initialBoard :: Board NekosenAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard NekosenAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 3 5, Coord 1 5]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -70,7 +73,7 @@ spec = do
 
     describe "Nekonekosen destinationsAt"$
         let diffs = [(Coord 8 3, Just$ Piece Black False FU)]
-            b = sets diffs$ initialBoard :: Board NekonekosenAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard NekonekosenAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 3 5, Coord 1 5]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -84,7 +87,7 @@ spec = do
                      (Coord 1 7, Just$ Piece Black False KY),
                      (Coord 1 9, Nothing),
                      (Coord 4 1, Just$ Piece Black False KI)]
-            b = sets diffs$ initialBoard :: Board YokoNekosenAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard YokoNekosenAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(9,7)"$ destinationsAt (Coord 9 7) b `shouldMatchList` [Coord 9 6, Coord 9 5, Coord 9 4, Coord 9 3]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -97,7 +100,7 @@ spec = do
                      (Coord 1 7, Just$ Piece Black False KY),
                      (Coord 1 9, Nothing),
                      (Coord 4 1, Just$ Piece Black False KI)]
-            b = sets diffs$ initialBoard :: Board YokoNekonekosenAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard YokoNekonekosenAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(9,7)"$ destinationsAt (Coord 9 7) b `shouldMatchList` [Coord 9 6, Coord 9 5, Coord 9 4, Coord 9 3]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -108,7 +111,7 @@ spec = do
     describe "Taimen destinationsAt"$
         let diffs = [(Coord 8 8, Just$ Piece White False KA),
                      (Coord 2 7, Just$ Piece White False FU)]
-            b = sets diffs$ initialBoard :: Board TaimenAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard TaimenAbilityProxy in do
         it "(8,7)"$ destinationsAt (Coord 8 7) b `shouldMatchList` [Coord 8 6]
         it "(8,8)"$ destinationsAt (Coord 8 8) b `shouldMatchList` []
         it "(8,9)"$ destinationsAt (Coord 8 9) b `shouldMatchList` [Coord 7 8, Coord 9 8]
@@ -120,7 +123,7 @@ spec = do
     describe "Haimen destinationsAt"$
         let diffs = [(Coord 8 9, Just$ Piece White False KE),
                      (Coord 2 8, Just$ Piece White False HI)]
-            b = sets diffs$ initialBoard :: Board HaimenAbilityProxy in do
+            b = sets diffs$ initialBoard :: NBoard HaimenAbilityProxy in do
         it "(8,7)"$ destinationsAt (Coord 8 7) b `shouldMatchList` [Coord 8 6]
         it "(8,8)"$ destinationsAt (Coord 8 8) b `shouldMatchList` [Coord 7 6, Coord 9 6]
         it "(8,9)"$ destinationsAt (Coord 8 9) b `shouldMatchList` [Coord 7 8, Coord 6 7, Coord 9 8]

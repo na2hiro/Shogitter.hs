@@ -54,33 +54,36 @@ instance AbilityProxy TenjikuAbilityProxy where
     abilityProxy color c b = map pieceToKind$ catMaybes [safeGet back b, get c b]
         where back = addCoord color backward c
 
+sliceWhile :: Coord -> Coord -> (Cell -> Bool) -> Board a s -> [Cell]
+sliceWhile base vec cond board@(Board _) = takeWhile cond$ map (`get` board)$ slice base vec board
+
 data NekosenAbilityProxy
 instance AbilityProxy NekosenAbilityProxy where
     abilityProxy color c b = [pieceToKind$ unsafeGet (Coord (getX c) (getY c+backwards-forwards)) b]
-        where forwards = length$ slice c forward cond b
-              backwards = length$ slice c backward cond b
+        where forwards = length$ sliceWhile c forward cond b
+              backwards = length$ sliceWhile c backward cond b
               cond (Just (Piece color' _ _)) | color==color' = True
               cond _ = False
 
 data YokoNekosenAbilityProxy
 instance AbilityProxy YokoNekosenAbilityProxy where
     abilityProxy color c b = [pieceToKind$ unsafeGet (Coord (getX c+lefts-rights) (getY c)) b]
-        where rights = length$ slice c right cond b
-              lefts = length$ slice c left cond b
+        where rights = length$ sliceWhile c right cond b
+              lefts = length$ sliceWhile c left cond b
               cond (Just (Piece color' _ _)) | color==color' = True
               cond _ = False
 
 data NekonekosenAbilityProxy
 instance AbilityProxy NekonekosenAbilityProxy where
     abilityProxy color c b = [pieceToKind$ unsafeGet (Coord (getX c) (getY c+backwards-forwards)) b]
-        where forwards = length$ slice c forward isJust b
-              backwards = length$ slice c backward isJust b
+        where forwards = length$ sliceWhile c forward isJust b
+              backwards = length$ sliceWhile c backward isJust b
 
 data YokoNekonekosenAbilityProxy
 instance AbilityProxy YokoNekonekosenAbilityProxy where
     abilityProxy color c b = [pieceToKind$ unsafeGet (Coord (getX c+lefts-rights) (getY c)) b]
-        where rights = length$ slice c right isJust b
-              lefts = length$ slice c left isJust b
+        where rights = length$ sliceWhile c right isJust b
+              lefts = length$ sliceWhile c left isJust b
 
 data TaimenAbilityProxy
 instance AbilityProxy TaimenAbilityProxy where
@@ -94,7 +97,7 @@ instance AbilityProxy HaimenAbilityProxy where
         Just (Piece color' _ kind) | color/=color' -> [kind]
         _ -> normalProxy c b
 
-normalProxy :: Coord -> Board a -> [Kind]
+normalProxy :: Coord -> Board a s -> [Kind]
 normalProxy c b =return$ pieceToKind$ unsafeGet c b
 
 pieceToKind (Piece _ _ kind) = kind
