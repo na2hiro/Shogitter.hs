@@ -1,7 +1,7 @@
 module Board.AbilityProxySpec where
 
 import Test.Hspec
-import Board(Board(..), destinationsAt, initialArray, sets, initialBoard)
+import Board(Board(..), destinationsAt, sets, initialBoard)
 import Board.AbilityProxy
 import Board.Slicer
 import Coord(Coord(..))
@@ -12,13 +12,17 @@ type NBoard a = Board a NormalSlicer
 
 spec :: Spec
 spec = do
-    describe "Annan destinationsAt"$ let b = initialBoard :: NBoard AnnanAbilityProxy in do
+    describe "Annan destinationsAt"$
+        let diffs = [(Coord 2 1, Just$ Piece White True KE), (Coord 2 9, Just$ Piece White True KE)]
+            b = sets diffs initialBoard :: NBoard AnnanAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6, Coord 2 5, Coord 2 4, Coord 2 3]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
         it "(8,9)"$ destinationsAt (Coord 8 9) b `shouldMatchList` []
         it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList` [Coord 9 4, Coord 7 4]
-        it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` [Coord 1 4, Coord 3 4]
+        it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` [Coord 1 2, Coord 3 2]
+        it "(2,8)"$ destinationsAt (Coord 2 8) b `shouldMatchList`
+            [Coord 2 9, Coord 1 8, Coord 3 8, Coord 4 8, Coord 5 8, Coord 6 8, Coord 7 8]
 
     describe "Anhoku destinationsAt"$ let b = initialBoard :: NBoard AnhokuAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
@@ -29,11 +33,11 @@ spec = do
         it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` []
 
     describe "Antouzai destinationsAt"$
-        let diffs = [(Coord 7 1, Nothing), (Coord 7 2, Just$ Piece White False GI)]
+        let diffs = [(Coord 7 1, Nothing), (Coord 7 2, Just$ Piece White False GI), (Coord 6 9, Just$ Piece White False KI)]
             b = sets diffs$ initialBoard :: NBoard AntouzaiAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6]
-        it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
+        it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` []
         it "(8,9)"$ destinationsAt (Coord 8 9) b `shouldMatchList` [Coord 9 8, Coord 7 8]
         it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList` [Coord 7 1]
         it "(7,2)"$ destinationsAt (Coord 7 2) b `shouldMatchList`
@@ -41,7 +45,8 @@ spec = do
         it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` []
 
     describe "Anki destinationsAt"$
-        let diffs = [(Coord 7 1, Nothing), (Coord 7 2, Just$ Piece White False GI)]
+        let diffs = [(Coord 7 1, Nothing), (Coord 7 2, Just$ Piece White False GI), (Coord 6 1, Just$ Piece Black True GI),
+                     (Coord 4 7, Just$ Piece White False FU), (Coord 4 9, Just$ Piece White False KI)]
             b = sets diffs$ initialBoard :: NBoard AnkiAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList`
             [Coord 8 6, Coord 7 6, Coord 6 6, Coord 7 8, Coord 8 5, Coord 6 5]
@@ -49,10 +54,14 @@ spec = do
             [Coord 2 6, Coord 2 5, Coord 2 4, Coord 2 3, Coord 3 6, Coord 1 6, Coord 1 8, Coord 3 8]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8]
         it "(8,9)"$ destinationsAt (Coord 8 9) b `shouldMatchList` []
-        it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList` [Coord 9 2]
+        it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList` []
         it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` [Coord 1 2, Coord 3 2]
+        it "(2,8)"$ destinationsAt (Coord 2 8) b `shouldMatchList`
+            [Coord 1 8, Coord 3 8, Coord 4 8, Coord 5 8, Coord 6 8, Coord 7 8]
 
-    describe "Tenjiku destinationsAt"$ let b = initialBoard :: NBoard TenjikuAbilityProxy in do
+    describe "Tenjiku destinationsAt"$
+        let diffs = [(Coord 2 9, Just$ Piece White False KE)]
+            b = sets diffs initialBoard :: NBoard TenjikuAbilityProxy in do
         it "(7,7)"$ destinationsAt (Coord 7 7) b `shouldMatchList` [Coord 7 6]
         it "(2,7)"$ destinationsAt (Coord 2 7) b `shouldMatchList` [Coord 2 6, Coord 2 5, Coord 2 4, Coord 2 3]
         it "(7,9)"$ destinationsAt (Coord 7 9) b `shouldMatchList` [Coord 7 8, Coord 6 8]
@@ -60,6 +69,8 @@ spec = do
         it "(8,2)"$ destinationsAt (Coord 8 2) b `shouldMatchList`
             [Coord 9 2, Coord 7 2, Coord 6 2, Coord 5 2, Coord 4 2, Coord 3 2, Coord 9 4, Coord 7 4]
         it "(2,2)"$ destinationsAt (Coord 2 2) b `shouldMatchList` [Coord 1 4, Coord 3 4]
+        it "(2,8)"$ destinationsAt (Coord 2 8) b `shouldMatchList`
+            [Coord 2 9, Coord 1 8, Coord 3 8, Coord 4 8, Coord 5 8, Coord 6 8, Coord 7 8]
 
     describe "Nekosen destinationsAt"$
         let diffs = [(Coord 8 3, Just$ Piece Black False FU)]

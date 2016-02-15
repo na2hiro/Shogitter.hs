@@ -12,6 +12,7 @@ data Range = Below | InRange | Above
 
 data NormalSlicer
 instance Slicer NormalSlicer where
+    regularity _ = True
     slice base vec = slice' (base+vec) vec
         where slice' now vec board = if board `inRange` now
                 then now: slice' (now + vec) vec board
@@ -19,6 +20,7 @@ instance Slicer NormalSlicer where
 
 data LoopSlicer
 instance Slicer LoopSlicer where
+    regularity _ = False
     slice base vec board = slice' (base+vec) vec
         where bs = bounds board
               slice' now vec = case bs `inRangeY` now of
@@ -29,12 +31,14 @@ instance Slicer LoopSlicer where
 
 data DonutSlicer
 instance Slicer DonutSlicer where
+    regularity _ = False
     slice base vec board = slice' (base+vec) vec
         where bs = bounds board
               slice' now vec = let now' = modC bs now in now': slice' (now'+vec) vec
 
 data ReflectSlicer
 instance Slicer ReflectSlicer where
+    regularity _ = False
     slice base vec board = slice' (base+vec) vec
         where bs@(min, max) = bounds board
               slice' now vec = now': slice' (now'+vec') vec'

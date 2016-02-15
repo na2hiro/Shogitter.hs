@@ -5,12 +5,9 @@ import Piece(Piece(..), Kind(..), Coord, Color(..), Promoted, move, MoveDef(..),
 import Coord(Coord(..), getY, direct)
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Slicer(NormalSlicer)
-import Data.Array.IArray as A(Array, listArray, (!), (//), bounds, indices, assocs)
+import Data.Array.IArray as A(Array, listArray, (!), (//), bounds, assocs)
 import Data.List(transpose, nub)
 import Data.Ix as Ix(inRange)
-import Data.Maybe(maybeToList, isJust, fromJust)
-import Control.Monad(guard)
-import Control.Arrow(second)
 
 type Cell = Maybe Piece
 data Move = Move Coord Coord Promoted | Put Coord Kind deriving (Show, Eq)
@@ -31,10 +28,11 @@ instance Show (Board a s) where
 type NormalBoard = Board NormalAbilityProxy NormalSlicer
 
 class AbilityProxy a where
-    abilityProxy :: Color -> Coord -> Board a s -> [Kind]
+    abilityProxy :: Color -> Coord -> Board a s -> [(Promoted, Kind)]
 
 class Slicer s where
     slice :: Coord -> Coord -> Board a s -> [Coord]
+    regularity :: Board a s -> Bool
 
 initialBoard :: (AbilityProxy a, Slicer s) => Board a s
 initialBoard = Board initialArray
@@ -71,34 +69,30 @@ inRange board = Ix.inRange$ Board.bounds board
 bounds :: Board a s -> (Coord, Coord)
 bounds (Board arr) = A.bounds arr
 
-coords :: Board a s -> [Coord]
-coords (Board arr) = indices arr
-
 cells :: Board a s -> [(Coord, Cell)]
 cells (Board arr) = assocs arr
 
-pieces :: Board a s -> [(Coord, Piece)]
-pieces = catSndMaybes. cells
-
-catSndMaybes :: [(a, Maybe b)] -> [(a, b)]
-catSndMaybes = map (second fromJust). filter (isJust. snd)
-
 destinationsAt :: Coord -> Board a s -> [Coord]
-destinationsAt from board@(Board _) = nub$ do
-    Piece color promoted kind <- maybeToList$ get from board
-    moveDef <- uniqueMoveDef$ do
-        ability <- abilityProxy color from board
-        move ability promoted
+destinationsAt from board@(Board _) | regularity board = destinationsAt' from board
+                                    | otherwise = nub$ destinationsAt' from board
+
+destinationsAt' :: Coord -> Board a s -> [Coord]
+destinationsAt' from board@(Board _) = do
+    moveDef <- case abilities of
+        [(promoted, ability)] -> move ability promoted
+        _ -> uniqueMoveDef$ concat [move ability promoted|(promoted, ability)<-abilities]
     case moveDef of
-        Exact vec -> take 1$ dests color from (direct color vec)
-        Slide vec -> dests color from (direct color vec)
-    where dests :: Color -> Coord -> Coord -> [Coord]
-          dests color from vec = takeW color$ map (\coord->(coord, get coord board))$ slice from vec board
-          takeW :: Color -> [(Coord, Cell)] -> [Coord]
-          takeW _ [] = []
-          takeW c ((to, Just (Piece c' _ _)):_) | c==c' = []
-                                                | otherwise = [to]
-          takeW c ((to,_):xs) = to:takeW c xs
+        Exact vec -> take 1$ dests from (direct color vec)
+        Slide vec -> dests from (direct color vec)
+    where Piece color _ kind = unsafeGet from board
+          abilities = abilityProxy color from board
+          dests :: Coord -> Coord -> [Coord]
+          dests from vec = takeW$ map (\coord->(coord, get coord board))$ slice from vec board
+          takeW :: [(Coord, Cell)] -> [Coord]
+          takeW [] = []
+          takeW ((to, Just (Piece color' _ _)):_) | color==color' = []
+                                                  | otherwise = [to]
+          takeW ((to,_):xs) = to:takeW xs
 
 addCoord :: Color -> Coord -> Coord -> Coord
 addCoord Black v x = x+v
