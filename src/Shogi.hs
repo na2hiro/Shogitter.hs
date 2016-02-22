@@ -4,6 +4,7 @@ module Shogi where
 import Board
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Slicer(NormalSlicer)
+import Shogi.MoverPredicator(NormalMoverPredicator)
 import Piece
 import Hands
 import Color
@@ -11,35 +12,41 @@ import Control.Monad(guard)
 
 type Turn = Color
 
-data Shogi a s where
-    Shogi :: (AbilityProxy a, Slicer s) => Turn -> Board a s -> Hands -> Shogi a s
-instance Eq (Shogi a s) where
+data Shogi a s mp where
+    Shogi :: (AbilityProxy a, Slicer s, MoverPredicator mp) => Turn -> Board a s -> Hands -> Shogi a s mp
+instance Eq (Shogi a s mp) where
     Shogi t b h == Shogi t' b' h' = t==t' && b==b' && h==h'
-instance Show (Shogi a s) where
+instance Show (Shogi a s mp) where
     show (Shogi turn board hands) = show board ++ show hands ++ show turn ++ "\n"
 
-type NormalShogi = Shogi NormalAbilityProxy NormalSlicer
+class MoverPredicator mp where
+    canMove :: Shogi a s mp -> (Coord, Piece) -> Bool
+    canMoveCoord :: Shogi a s mp -> Coord -> Bool
+    canMoveCoord shogi@(Shogi _ board _) coord = canMove shogi (coord, unsafeGet coord board)
 
-initialShogi :: (AbilityProxy a, Slicer s) => Shogi a s
+type NormalShogi = Shogi NormalAbilityProxy NormalSlicer NormalMoverPredicator
+
+initialShogi :: (AbilityProxy a, Slicer s, MoverPredicator mp) => Shogi a s mp
 initialShogi = Shogi Black initialBoard initialHands
 
-getMoves :: Shogi a s -> [Move]
-getMoves (Shogi turn board hands) = do
-    (from, piece) <- cells board
-    case piece of
+getMoves :: Shogi a s mp -> [Move]
+getMoves shogi@(Shogi turn board hands) = do
+    (from, cell) <- cells board
+    case cell of
         Nothing -> map (Put from) kinds
-        Just (Piece color _ _) -> do
-            guard$ color == turn
+        Just p@(Piece color _ _) -> do
+            guard$ canMove' (from, p)
             dest <- destinationsAt from board
             if canPromote color board from || canPromote color board dest
                 then map (Move from dest) [True,False]
                 else return$ Move from dest False
     where kinds = kindsHand turn hands
+          canMove' = canMove shogi
 
-getNext :: Shogi a s -> [Shogi a s]
+getNext :: Shogi a s mp -> [Shogi a s mp]
 getNext board = [unsafeDoMove move board | move <- getMoves board]
 
-unsafeDoMove :: Move -> Shogi a s -> Shogi a s
+unsafeDoMove :: Move -> Shogi a s mp -> Shogi a s mp
 unsafeDoMove (Move from to promoted) (Shogi turn board hands) = Shogi turn' board' hands'
     where Just fromPiece =  get from board
           fromPiece' = Just$ promote promoted fromPiece
@@ -52,7 +59,7 @@ unsafeDoMove (Put to kind) (Shogi turn board hands) = Shogi (opposite turn) boar
     where Just hands' = removeFromHands turn kind hands
           board' = set (to, Just$ Piece turn False kind) board
 
-doMove :: Move -> Shogi a s -> Maybe (Shogi a s)
+doMove :: Move -> Shogi a s mp -> Maybe (Shogi a s mp)
 doMove (Move from to promoted) (Shogi turn board hands) = do
     guard$ board `inRange` from
     guard$ board `inRange` to
