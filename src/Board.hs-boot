@@ -3,13 +3,13 @@ module Board where
 
 import Coord(Coord)
 import Piece(Piece, Kind, Promoted)
-import Data.Array.IArray(Array)
+import Data.Vector as V(Vector)
 import Color(Color)
 
 type Cell = Maybe Piece
 
 data Board a s where
-    Board :: (AbilityProxy a, Slicer s) => Array Coord Cell -> Board a s
+    Board :: (AbilityProxy a, Slicer s) => (Int, Int) -> Vector Cell -> Board a s
 
 class AbilityProxy a where
     abilityProxy :: Color -> Coord -> Board a s -> [(Promoted, Kind)]

@@ -9,6 +9,7 @@ import Piece
 import Hands
 import Color
 import Control.Monad(guard)
+import Data.Vector.Generic(Vector)
 
 type Turn = Color
 

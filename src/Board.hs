@@ -5,17 +5,18 @@ import Piece(Piece(..), Kind(..), Coord, Color(..), Promoted, move, MoveDef(..),
 import Coord(Coord(..), getY, direct)
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Slicer(NormalSlicer)
-import Data.Array.IArray as A(Array, listArray, (!), (//), bounds, assocs)
+import Data.Vector as V(Vector, fromList, toList, (!), (//))
 import Data.List(transpose, nub)
 import Data.Ix as Ix(inRange)
+import Control.Arrow(first)
 
 type Cell = Maybe Piece
 data Move = Move Coord Coord Promoted | Put Coord Kind deriving (Show, Eq)
 
 data Board a s where
-    Board :: (AbilityProxy a, Slicer s) => Array Coord Cell -> Board a s
+    Board :: (AbilityProxy a, Slicer s) => (Int, Int) -> Vector Cell -> Board a s
 instance Eq (Board a s) where
-    Board arr == Board arr2 = arr == arr2
+    Board size vec == Board size2 vec2 = size == size2 && toList vec == toList vec2
 instance Show (Board a s) where
     show board = concat$ do
         y <- [1..9]
@@ -35,10 +36,10 @@ class Slicer s where
     regularity :: Board a s -> Bool
 
 initialBoard :: (AbilityProxy a, Slicer s) => Board a s
-initialBoard = Board initialArray
+initialBoard = Board (9,9) initialArray
 
-initialArray :: Array Coord Cell
-initialArray = listArray (Coord 1 1, Coord 9 9)$ concat. transpose$ gote++replicate 3 four++sente
+initialArray :: Vector Cell
+initialArray = fromList. concat. transpose$ gote++replicate 3 four++sente
     where one = map Just $ [KY .. KI]++OU:[KI,GI .. KY]
           two = Nothing:Just KA:replicate 5 Nothing++[Just HI,Nothing]
           three = replicate 9 $ Just FU
@@ -52,32 +53,37 @@ unsafeGet :: Coord -> Board a s -> Piece
 unsafeGet c b = let Just p = get c b in p
 
 get :: Coord -> Board a s -> Cell
-get c (Board b) = b!c
+get c b@(Board size v) = v!coordToInt b c
 
-safeGet :: Coord -> Board a s ->  Cell
-safeGet c b@(Board a) = if b `Board.inRange` c then a!c else Nothing
+safeGet :: Coord -> Board a s -> Cell
+safeGet c b@(Board _ v) = if b `Board.inRange` c then get c b else Nothing
 
 set :: (Coord, Cell) -> Board a s -> Board a s
 set cp = sets [cp]
 
 sets :: [(Coord, Cell)] -> Board a s -> Board a s
-sets cps (Board b) = Board$ b // cps
+sets cps b@(Board size v) = Board size$ v // map (first (coordToInt b)) cps
 
 inRange :: Board a s -> Coord -> Bool
-inRange board = Ix.inRange$ Board.bounds board
+inRange board = Ix.inRange$ bounds board
 
 bounds :: Board a s -> (Coord, Coord)
-bounds (Board arr) = A.bounds arr
+bounds (Board size vec) = (Coord 1 1, uncurry Coord size)
 
 cells :: Board a s -> [(Coord, Cell)]
-cells (Board arr) = assocs arr
+cells b@(Board _ vec) = zip (map (intToCoord b) [0..])$ toList vec
+
+coordToInt :: Board a s -> Coord -> Int
+coordToInt (Board (xMax, _) _) (Coord x y) = xMax*(x-1)+y-1
+intToCoord :: Board a s -> Int -> Coord
+intToCoord (Board (xMax, _) _) n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
 
 destinationsAt :: Coord -> Board a s -> [Coord]
-destinationsAt from board@(Board _) | regularity board = destinationsAt' from board
-                                    | otherwise = nub$ destinationsAt' from board
+destinationsAt from board@(Board _ _) | regularity board = destinationsAt' from board
+                                      | otherwise = nub$ destinationsAt' from board
 
 destinationsAt' :: Coord -> Board a s -> [Coord]
-destinationsAt' from board@(Board _) = do
+destinationsAt' from board@(Board _ _) = do
     moveDef <- case abilities of
         [(promoted, ability)] -> move ability promoted
         _ -> uniqueMoveDef$ concat [move ability promoted|(promoted, ability)<-abilities]
@@ -104,4 +110,4 @@ canPromote _ board coord = canPromote Black board$ reverseCoord board coord
 
 reverseCoord :: Board a s -> Coord -> Coord
 reverseCoord board c = max+min-c
-    where (min, max) = Board.bounds board
+    where (min, max) = bounds board

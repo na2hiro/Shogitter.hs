@@ -5,6 +5,7 @@ import Coord
 import Piece
 import Board
 import Hands
+import Data.Vector(Vector)
 
 type Turn = Color
 
