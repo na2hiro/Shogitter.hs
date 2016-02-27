@@ -62,7 +62,7 @@ instance AbilityProxy TenjikuAbilityProxy where
         Just (Piece color' promoted kind) | color==color' -> [(promoted, kind), pieceToPromotedKind$ unsafeGet c b]
         _ -> return$ pieceToPromotedKind$ unsafeGet c b
 
-sliceWhile :: Coord -> Coord -> (Cell -> Bool) -> Board a s -> [Cell]
+sliceWhile :: Coord -> Coord -> (Cell -> Bool) -> Board m a s -> [Cell]
 sliceWhile base vec cond board@(Board _ _) = takeWhile cond$ map (`get` board)$ slice base vec board
 
 data NekosenAbilityProxy
@@ -105,7 +105,7 @@ instance AbilityProxy HaimenAbilityProxy where
         Just (Piece color' promoted kind) | color/=color' -> [(promoted, kind)]
         _ -> normalProxy c b
 
-normalProxy :: Coord -> Board a s -> [(Promoted, Kind)]
+normalProxy :: Coord -> Board m a s -> [(Promoted, Kind)]
 normalProxy c b =return$ pieceToPromotedKind$ unsafeGet c b
 
 pieceToPromotedKind :: Piece -> (Promoted, Kind)

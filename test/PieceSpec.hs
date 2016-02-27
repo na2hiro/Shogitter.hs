@@ -10,7 +10,7 @@ c23 = Coord 2 3
 spec :: Spec
 spec = do
     describe "move length"$ do
-        it "FU"$ length (move FU False) `shouldBe` 1
+        it "FU"$ length (moveDefs FU False) `shouldBe` 1
     describe "uniqueMoveDef"$ do
         it "Same Exact"$ uniqueMoveDef [Exact c12, Exact c23, Exact c12] `shouldMatchList` [Exact c12, Exact c23]
         it "Same Slide"$ uniqueMoveDef [Slide c12, Exact c23, Slide c12] `shouldMatchList` [Slide c12, Exact c23]

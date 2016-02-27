@@ -6,9 +6,10 @@ import Board(Move(..))
 import Coord(Coord(..))
 import Board.Slicer
 import Board.AbilityProxy(NormalAbilityProxy)
+import Board.Mover(NormalMover)
 import Shogi.MoverPredicator
 
-type NShogi mp = Shogi NormalAbilityProxy NormalSlicer mp
+type NShogi mp = Shogi NormalMover NormalAbilityProxy NormalSlicer mp
 
 spec :: Spec
 spec = do

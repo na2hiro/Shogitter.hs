@@ -7,19 +7,23 @@ import Data.Vector as V(Vector)
 import Color(Color)
 
 type Cell = Maybe Piece
+data Move = Move Coord Coord Promoted | Put Coord Kind
 
-data Board a s where
-    Board :: (AbilityProxy a, Slicer s) => (Int, Int) -> Vector Cell -> Board a s
+data Board m a s where
+    Board :: (Mover m, AbilityProxy a, Slicer s) => (Int, Int) -> Vector Cell -> Board m a s
 
 class AbilityProxy a where
-    abilityProxy :: Color -> Coord -> Board a s -> [(Promoted, Kind)]
+    abilityProxy :: Color -> Coord -> Board m a s -> [(Promoted, Kind)]
 class Slicer s where
-    slice :: Coord -> Coord -> Board a s -> [Coord]
-    regularity :: Board a s -> Bool
+    slice :: Coord -> Coord -> Board m a s -> [Coord]
+    regularity :: Board m a s -> Bool
+class Mover m where
+    move :: Move -> Board m a s -> (Board m a s, [Kind])
 
-unsafeGet :: Coord -> Board a s -> Piece
-get :: Coord -> Board a s -> Cell
-safeGet :: Coord -> Board a s ->  Cell
+unsafeGet :: Coord -> Board m a s -> Piece
+get :: Coord -> Board m a s -> Cell
+safeGet :: Coord -> Board m a s ->  Cell
+sets :: [(Coord, Cell)] -> Board m a s -> Board m a s
 addCoord :: Color -> Coord -> Coord -> Coord
-inRange :: Board a s -> Coord -> Bool
-bounds :: Board a s -> (Coord, Coord)
+inRange :: Board m a s -> Coord -> Bool
+bounds :: Board m a s -> (Coord, Coord)

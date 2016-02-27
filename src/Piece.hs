@@ -1,4 +1,4 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), move, promote, uniqueMoveDef) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, uniqueMoveDef) where
 
 import Color(Color(..))
 import Coord
@@ -23,18 +23,18 @@ kin = map Exact [forwardRight, forward, forwardLeft, right, left, backward]
 ex = [forwardRight, forwardLeft, backwardRight, backwardLeft]
 plus = [forward, right, left, backward]
 
-move :: Kind -> Promoted -> [MoveDef]
-move FU False = [Exact forward]
-move KY False = [Slide forward]
-move KE False = map Exact [forwardRight+forward, forwardLeft+forward]
-move GI False = map Exact [forwardRight, forward, forwardLeft, backwardRight, backwardLeft]
-move KI False = kin
-move KA False = map Slide ex
-move KA True = map Slide ex ++ map Exact plus
-move HI False = map Slide plus
-move HI True = map Slide plus ++ map Exact ex
-move OU False = map Exact (plus++ex)
-move _ True = kin
+moveDefs :: Kind -> Promoted -> [MoveDef]
+moveDefs FU False = [Exact forward]
+moveDefs KY False = [Slide forward]
+moveDefs KE False = map Exact [forwardRight+forward, forwardLeft+forward]
+moveDefs GI False = map Exact [forwardRight, forward, forwardLeft, backwardRight, backwardLeft]
+moveDefs KI False = kin
+moveDefs KA False = map Slide ex
+moveDefs KA True = map Slide ex ++ map Exact plus
+moveDefs HI False = map Slide plus
+moveDefs HI True = map Slide plus ++ map Exact ex
+moveDefs OU False = map Exact (plus++ex)
+moveDefs _ True = kin
 
 data Piece = Piece Color Promoted Kind deriving (Eq)
 promote :: Promoted -> Piece -> Piece

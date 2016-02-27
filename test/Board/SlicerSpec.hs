@@ -7,8 +7,9 @@ import Color(Color(..))
 import Coord(Coord(..))
 import Board.Slicer
 import Board.AbilityProxy(NormalAbilityProxy)
+import Board.Mover(NormalMover)
 
-type NBoard s = Board NormalAbilityProxy s
+type NBoard s = Board NormalMover NormalAbilityProxy s
 
 spec :: Spec
 spec = do
