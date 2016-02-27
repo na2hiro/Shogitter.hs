@@ -24,7 +24,7 @@ instance Show (Board m e a s) where
         y <- [1..9]
         return. (\line->"P"++show y++line++"\n"). concat$ do
             x <- [9,8..1]
-            return. showCell$ get (Coord x y) board
+            return. showCell$ get board$ Coord x y
         where showCell Nothing = " * "
               showCell (Just p) = show p
 
@@ -36,7 +36,7 @@ class AbilityProxy a where
 class Slicer s where
     sliceAsCoord :: Board m e a s -> Coord -> Coord -> [Coord]
     slice :: Board m e a s -> Coord -> Coord -> [(Coord, Cell)]
-    slice board base vec = map (\coord -> (coord, get coord board))$ sliceAsCoord board base vec
+    slice board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoord board base vec
     regularity :: Board m e a s -> Bool
 
 class Mover m where
@@ -61,20 +61,20 @@ initialArray = fromList. concat. transpose$ gote++replicate 3 four++sente
           sente :: [[Cell]]
           sente = reverse$ map (reverse . map (fmap (\(Piece color _ kind)->Piece Black False kind))) gote
 
-unsafeGet :: Coord -> Board m e a s -> Piece
-unsafeGet c b = let Just p = get c b in p
+unsafeGet :: Board m e a s -> Coord -> Piece
+unsafeGet b c = let Just p = get b c in p
 
-get :: Coord -> Board m e a s -> Cell
-get c b@(Board size v) = v!coordToInt b c
+get :: Board m e a s -> Coord -> Cell
+get b@(Board size v) c = v!coordToInt b c
 
-safeGet :: Coord -> Board m e a s -> Cell
-safeGet c b@(Board _ v) = if b `Board.inRange` c then get c b else Nothing
+safeGet :: Board m e a s -> Coord -> Cell
+safeGet b@(Board _ v) c = if b `Board.inRange` c then get b c else Nothing
 
-set :: (Coord, Cell) -> Board m e a s -> Board m e a s
-set cp = sets [cp]
+set :: Board m e a s -> (Coord, Cell) -> Board m e a s
+set b cp = sets b [cp]
 
-sets :: [(Coord, Cell)] -> Board m e a s -> Board m e a s
-sets cps b@(Board size v) = Board size$ v // map (first (coordToInt b)) cps
+sets :: Board m e a s -> [(Coord, Cell)] -> Board m e a s
+sets b@(Board size v) cps = Board size$ v // map (first (coordToInt b)) cps
 
 inRange :: Board m e a s -> Coord -> Bool
 inRange board = Ix.inRange$ bounds board
@@ -90,19 +90,19 @@ coordToInt (Board (xMax, _) _) (Coord x y) = xMax*(x-1)+y-1
 intToCoord :: Board m e a s -> Int -> Coord
 intToCoord (Board (xMax, _) _) n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
 
-destinationsAt :: Coord -> Board m e a s -> [Coord]
-destinationsAt from board@(Board _ _) | regularity board = destinationsAt' from board
-                                      | otherwise = nub$ destinationsAt' from board
+destinationsAt :: Board m e a s -> Coord -> [Coord]
+destinationsAt board@(Board _ _) from | regularity board = destinationsAt' board from
+                                      | otherwise = nub$ destinationsAt' board from
 
-destinationsAt' :: Coord -> Board m e a s -> [Coord]
-destinationsAt' from board@(Board _ _) = do
+destinationsAt' :: Board m e a s -> Coord -> [Coord]
+destinationsAt' board@(Board _ _) from = do
     moveDef <- case abilities of
         [(promoted, ability)] -> moveDefs ability promoted
         _ -> uniqueMoveDef$ concat [moveDefs ability promoted|(promoted, ability)<-abilities]
     case moveDef of
         Exact vec -> take 1$ dests from (direct color vec)
         Slide vec -> dests from (direct color vec)
-    where Piece color _ kind = unsafeGet from board
+    where Piece color _ kind = unsafeGet board from
           abilities = abilityProxy color from board
           dests :: Coord -> Coord -> [Coord]
           dests from vec = takeW$ slice board from vec
@@ -113,8 +113,8 @@ destinationsAt' from board@(Board _ _) = do
           takeW ((to,_):xs) = to:takeW xs
 
 addCoord :: Color -> Coord -> Coord -> Coord
-addCoord Black v x = x+v
-addCoord White v x = x-v
+addCoord Black x v = x+v
+addCoord White x v = x-v
 
 canPromote :: Color -> Board m e a s -> Coord -> Bool
 canPromote Black _ c = getY c<=3

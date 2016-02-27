@@ -8,8 +8,8 @@ import Data.Maybe(maybeToList)
 
 data NormalMover
 instance Mover NormalMover where
-    move (Move from to promoted) board = (sets [(from, Nothing), (to, toPiece)] board, kinds)
-        where Just fromPiece = get from board
+    move (Move from to promoted) board = (sets board [(from, Nothing), (to, toPiece)], kinds)
+        where Just fromPiece = get board from
               toPiece = Just$ promote promoted fromPiece
-              kinds = map getKind$ maybeToList$ get to board
+              kinds = map getKind$ maybeToList$ get board to
               getKind (Piece _ _ kind) = kind

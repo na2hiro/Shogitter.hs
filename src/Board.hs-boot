@@ -26,10 +26,10 @@ class Effector e where
     effectPut :: Coord -> Board m e a s -> Board m e a s
     effectPut = effect
 
-unsafeGet :: Coord -> Board m e a s -> Piece
-get :: Coord -> Board m e a s -> Cell
-safeGet :: Coord -> Board m e a s ->  Cell
-sets :: [(Coord, Cell)] -> Board m e a s -> Board m e a s
+unsafeGet :: Board m e a s -> Coord -> Piece
+get :: Board m e a s -> Coord -> Cell
+safeGet :: Board m e a s -> Coord -> Cell
+sets :: Board m e a s -> [(Coord, Cell)] -> Board m e a s
 addCoord :: Color -> Coord -> Coord -> Coord
 inRange :: Board m e a s -> Coord -> Bool
 bounds :: Board m e a s -> (Coord, Coord)

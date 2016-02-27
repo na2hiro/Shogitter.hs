@@ -26,7 +26,7 @@ instance Show (Shogi m e a s mp) where
 class MoverPredicator mp where
     canMove :: Shogi m e a s mp -> (Coord, Piece) -> Bool
     canMoveCoord :: Shogi m e a s mp -> Coord -> Bool
-    canMoveCoord shogi@(Shogi _ board _) coord = canMove shogi (coord, unsafeGet coord board)
+    canMoveCoord shogi@(Shogi _ board _) coord = canMove shogi (coord, unsafeGet board coord)
 
 type NormalShogi = Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator
 
@@ -42,12 +42,12 @@ getMoves shogi@(Shogi turn board hands) = do
     where kinds = kindsHand turn hands
 
 getMovesFrom :: Shogi m e a s mp -> Coord -> [Move]
-getMovesFrom shogi@(Shogi _ board _) from = getMovesFrom' shogi from (unsafeGet from board)
+getMovesFrom shogi@(Shogi _ board _) from = getMovesFrom' shogi from$ unsafeGet board from
 
 getMovesFrom' :: Shogi m e a s mp -> Coord -> Piece -> [Move]
 getMovesFrom' shogi@(Shogi _ board _) from p@(Piece color _ _) = do
     guard$ canMove' (from, p)
-    dest <- destinationsAt from board
+    dest <- destinationsAt board from
     if canPromote color board from || canPromote color board dest
         then map (Move from dest) [True,False]
         else return$ Move from dest False
@@ -63,13 +63,13 @@ unsafeDoMove mv@(Move from to promoted) (Shogi turn board hands) = Shogi turn' (
           hands' = foldr (addToHands turn) hands kinds
 unsafeDoMove (Put to kind) (Shogi turn board hands) = Shogi (opposite turn) (effectPut to board') hands'
     where Just hands' = removeFromHands turn kind hands
-          board' = set (to, Just$ Piece turn False kind) board
+          board' = set board (to, Just$ Piece turn False kind)
 
 doMove :: Move -> Shogi m e a s mp -> Maybe (Shogi m e a s mp)
 doMove move@(Move from _ _) shogi@(Shogi _ board _) = do
     guard$ board `inRange` from && move `elem` getMovesFrom shogi from
     return$ unsafeDoMove move shogi
 doMove move@(Put to kind) shogi@(Shogi turn board hands) = do
-    guard$ board `inRange` to && isNothing (get to board)
+    guard$ board `inRange` to && isNothing (get board to)
     hands' <- removeFromHands turn kind hands
     return$ unsafeDoMove move shogi
