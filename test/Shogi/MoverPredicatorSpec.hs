@@ -4,12 +4,13 @@ import Test.Hspec
 import Shogi
 import Board(Move(..))
 import Coord(Coord(..))
-import Board.Slicer
+import Board.Slicer(NormalSlicer)
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Mover(NormalMover)
+import Board.Effector(NormalEffector)
 import Shogi.MoverPredicator
 
-type NShogi mp = Shogi NormalMover NormalAbilityProxy NormalSlicer mp
+type NShogi mp = Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer mp
 
 spec :: Spec
 spec = do

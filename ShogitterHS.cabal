@@ -25,6 +25,7 @@ library
                       , Board.AbilityProxy
                       , Board.Slicer
                       , Board.Mover
+                      , Board.Effector
                       , Shogi.MoverPredicator
   build-depends:        base >= 4.7 && < 5
                       , containers >= 0.5.6.2

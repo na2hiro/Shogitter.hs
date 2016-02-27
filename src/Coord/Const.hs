@@ -12,3 +12,7 @@ forwardRight = forward+right
 forwardLeft = forward+left
 backwardRight = backward+right
 backwardLeft = backward+left
+
+fourDirections = [forward, backward, right, left]
+fourDirectionsSkew = [forwardRight, forwardLeft, backwardRight, backwardLeft]
+eightDirections = fourDirections ++ fourDirectionsSkew

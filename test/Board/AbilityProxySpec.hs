@@ -5,11 +5,12 @@ import Board(Board(..), destinationsAt, sets, initialBoard)
 import Board.AbilityProxy
 import Board.Slicer
 import Board.Mover(NormalMover)
+import Board.Effector(NormalEffector)
 import Coord(Coord(..))
 import Color(Color(..))
 import Piece(Piece(..), Kind(..))
 
-type NBoard a = Board NormalMover a NormalSlicer
+type NBoard a = Board NormalMover NormalEffector a NormalSlicer
 
 spec :: Spec
 spec = do

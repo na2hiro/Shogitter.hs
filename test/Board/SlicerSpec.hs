@@ -8,8 +8,9 @@ import Coord(Coord(..))
 import Board.Slicer
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Mover(NormalMover)
+import Board.Effector(NormalEffector)
 
-type NBoard s = Board NormalMover NormalAbilityProxy s
+type NBoard s = Board NormalMover NormalEffector NormalAbilityProxy s
 
 spec :: Spec
 spec = do

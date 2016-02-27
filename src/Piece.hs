@@ -20,8 +20,6 @@ data Kind = FU | KY | KE | GI | KI | KA | HI | OU deriving (Show, Ord, Eq, Enum)
 
 kin :: [MoveDef]
 kin = map Exact [forwardRight, forward, forwardLeft, right, left, backward]
-ex = [forwardRight, forwardLeft, backwardRight, backwardLeft]
-plus = [forward, right, left, backward]
 
 moveDefs :: Kind -> Promoted -> [MoveDef]
 moveDefs FU False = [Exact forward]
@@ -29,11 +27,11 @@ moveDefs KY False = [Slide forward]
 moveDefs KE False = map Exact [forwardRight+forward, forwardLeft+forward]
 moveDefs GI False = map Exact [forwardRight, forward, forwardLeft, backwardRight, backwardLeft]
 moveDefs KI False = kin
-moveDefs KA False = map Slide ex
-moveDefs KA True = map Slide ex ++ map Exact plus
-moveDefs HI False = map Slide plus
-moveDefs HI True = map Slide plus ++ map Exact ex
-moveDefs OU False = map Exact (plus++ex)
+moveDefs KA False = map Slide fourDirectionsSkew
+moveDefs KA True = map Slide fourDirectionsSkew ++ map Exact fourDirections
+moveDefs HI False = map Slide fourDirections
+moveDefs HI True = map Slide fourDirections ++ map Exact fourDirectionsSkew
+moveDefs OU False = map Exact eightDirections
 moveDefs _ True = kin
 
 data Piece = Piece Color Promoted Kind deriving (Eq)
