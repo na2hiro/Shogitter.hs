@@ -33,7 +33,9 @@ class AbilityProxy a where
     abilityProxy :: Color -> Coord -> Board m a s -> [(Promoted, Kind)]
 
 class Slicer s where
-    slice :: Coord -> Coord -> Board m a s -> [Coord]
+    sliceAsCoord :: Board m a s -> Coord -> Coord -> [Coord]
+    slice :: Board m a s -> Coord -> Coord -> [(Coord, Cell)]
+    slice board base vec = map (\coord -> (coord, get coord board))$ sliceAsCoord board base vec
     regularity :: Board m a s -> Bool
 
 class Mover m where
@@ -97,7 +99,7 @@ destinationsAt' from board@(Board _ _) = do
     where Piece color _ kind = unsafeGet from board
           abilities = abilityProxy color from board
           dests :: Coord -> Coord -> [Coord]
-          dests from vec = takeW$ map (\coord->(coord, get coord board))$ slice from vec board
+          dests from vec = takeW$ slice board from vec
           takeW :: [(Coord, Cell)] -> [Coord]
           takeW [] = []
           takeW ((to, Just (Piece color' _ _)):_) | color==color' = []

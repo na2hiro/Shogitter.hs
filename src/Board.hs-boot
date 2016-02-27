@@ -15,7 +15,9 @@ data Board m a s where
 class AbilityProxy a where
     abilityProxy :: Color -> Coord -> Board m a s -> [(Promoted, Kind)]
 class Slicer s where
-    slice :: Coord -> Coord -> Board m a s -> [Coord]
+    sliceAsCoord :: Board m a s -> Coord -> Coord -> [Coord]
+    slice :: Board m a s -> Coord -> Coord -> [(Coord, Cell)]
+    slice board base vec = map (\coord -> (coord, get coord board))$ sliceAsCoord board base vec
     regularity :: Board m a s -> Bool
 class Mover m where
     move :: Move -> Board m a s -> (Board m a s, [Kind])

@@ -63,7 +63,7 @@ instance AbilityProxy TenjikuAbilityProxy where
         _ -> return$ pieceToPromotedKind$ unsafeGet c b
 
 sliceWhile :: Coord -> Coord -> (Cell -> Bool) -> Board m a s -> [Cell]
-sliceWhile base vec cond board@(Board _ _) = takeWhile cond$ map (`get` board)$ slice base vec board
+sliceWhile base vec cond board@(Board _ _) = takeWhile cond$ map snd$ slice board base vec
 
 data NekosenAbilityProxy
 instance AbilityProxy NekosenAbilityProxy where
