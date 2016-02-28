@@ -3,26 +3,30 @@ module Board.Effector
     , OthelloEffector
     , GoEffector
     , NipEffector
+    , UnderWaterEffector
+    , NuclearEffector
+    , DondenEffector
+    , GravityEffector
     ) where
 
 import {-# SOURCE #-}Board
 import Coord.Const(fourDirections, eightDirections)
-import Piece(Piece(..))
+import Piece(Piece(..), promoteReverse)
 import Color(Color(..))
 import Coord
 import Coord.Const
 import Data.List(concatMap)
 import qualified Data.Set as S
 import Control.Monad(foldM)
-import Data.Maybe(maybe)
+import Data.Maybe(maybe, isNothing, isJust)
 
 data NormalEffector
 instance Effector NormalEffector where
-    effect _ = id
+    effect _ _ = id
 
 data OthelloEffector
 instance Effector OthelloEffector where
-    effect to board = sets board$ map (changeColor color)$ nipping8 board to
+    effect _ to board = sets board$ map (changeColor color)$ nipping8 board to
         where Piece color _ _ = unsafeGet board to
               changeColor color (c, Just (Piece _ promoted kind)) = (c, Just$ Piece color promoted kind)
 
@@ -44,27 +48,72 @@ nipped color = nipped' []
 
 data GoEffector
 instance Effector GoEffector where
-    effect to board = sets board$ map empty$ surrounding board to
+    effect _ to board = sets board$ map empty$ surrounding byEnemy board to
 
 empty :: Coord -> (Coord, Cell)
 empty c = (c, Nothing)
 
-surrounding :: Board m e a s -> Coord -> [Coord]
-surrounding board coord = concatMap (surrounded board color. (coord +)) fourDirections
-    where Piece color _ _ = unsafeGet board coord
+surrounding :: SurroundType m e a s -> Board m e a s -> Coord -> [Coord]
+surrounding by board coord = concatMap (surrounded by board color. (coord +)) fourDirections
+    where Piece color _ _ = unsafeGet board coord -- do not evaluate color for `surrounding bySpace` call
 
-surrounded :: Board m e a s -> Color -> Coord -> [Coord]
-surrounded board@(Board _ _) color coord = maybe [] S.toList$ surrounded' S.empty coord
-    where surrounderColor (Just (Piece color' _ _)) | color==color' = True
+surrounded :: SurroundType m e a s -> Board m e a s -> Color -> Coord -> [Coord]
+surrounded by board@(Board _ _) color coord = maybe [] S.toList$ surrounded' S.empty coord
+    where surrounded' :: S.Set Coord -> Coord -> Maybe (S.Set Coord)
+          surrounded' set c | (c `elem` set)  = Just set
+                            | otherwise = case by board color c of
+                                Surrounded -> Just set
+                                NotSurrounded -> Nothing
+                                Keep -> foldM surrounded' (S.insert c set)$ map (c +) fourDirections
+
+data Surrounded = Surrounded | NotSurrounded | Keep
+
+type SurroundType m e a s = Board m e a s -> Color -> Coord -> Surrounded
+
+byEnemy :: SurroundType m e a s
+byEnemy board color c | not (board `inRange` c) || surrounderColor cell = Surrounded
+                      | Nothing <- cell = NotSurrounded
+                      | otherwise = Keep
+    where cell = get board c
+          surrounderColor (Just (Piece color' _ _)) | color==color' = True
           surrounderColor _ = False
-          surrounded' :: S.Set Coord -> Coord -> Maybe (S.Set Coord)
-          surrounded' set c | (c `elem` set) || not (board `inRange` c) = Just set
-                            | Nothing <- cell = Nothing
-                            | surrounderColor cell = Just set
-                            | otherwise = foldM surrounded' (S.insert c set)$ map (c +) fourDirections
-            where cell = get board c
+
+bySpace :: Board m e a s -> Color -> Coord -> Surrounded
+bySpace board _ c | not (board `inRange` c) = NotSurrounded
+                  | Nothing <- get board c = Surrounded
+                  | otherwise = Keep
 
 data NipEffector
 instance Effector NipEffector where
-    effect to board = sets board$ map empty$ map fst (nipping4 board to) ++ surrounding board to
+    effect _ to board = sets board$ map empty$ map fst (nipping4 board to) ++ surrounding byEnemy board to
 
+data UnderWaterEffector
+instance Effector UnderWaterEffector where
+    effect from to board = sets board$ map empty$ surrounding bySpace board from ++ surrounded bySpace board undefined to
+    effectPut _ = id
+
+data NuclearEffector
+instance Effector NuclearEffector where
+    effect _ to board = sets board diffs
+        where dests = destinationsAt board to
+              diffs = map flipPiece$ filter (isJust. snd)$ map (\c -> (c, get board c)) dests
+              flipPiece (c, Just p) = (c, Just$ promoteReverse p)
+
+data DondenEffector
+instance Effector DondenEffector where
+    effect _ to board = case safeGet board fwd of
+        Just (Piece color' promoted' kind') | color/=color' ->
+            sets board [(fwd, Just$ Piece color' promoted kind), (to, Just$ Piece color promoted' kind')]
+        _ -> board
+        where Piece color promoted kind = unsafeGet board to
+              fwd = addCoord color to forward
+
+data GravityEffector
+instance Effector GravityEffector where
+    effect _ _ board = sets board$ gravity board
+
+gravity :: Board m e a s -> [(Coord, Cell)]
+gravity board@(Board (x,y) v) = concatMap gravityRow [1..y]
+    where gravityRow y = zip coords$ candidates++repeat Nothing
+            where candidates = filter isJust$ map (get board) coords
+                  coords = map (flip Coord y) [1..x]

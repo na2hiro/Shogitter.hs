@@ -43,9 +43,9 @@ class Mover m where
     move :: Move -> Board m e a s -> (Board m e a s, [Kind])
 
 class Effector e where
-    effect :: Coord -> Board m e a s -> Board m e a s
+    effect :: Coord -> Coord -> Board m e a s -> Board m e a s
     effectPut :: Coord -> Board m e a s -> Board m e a s
-    effectPut = effect
+    effectPut = effect (error "Define `effectPut` for Effector if `effect` uses `from` parameter")
 
 initialBoard :: (Mover m, Effector e, AbilityProxy a, Slicer s) => Board m e a s
 initialBoard = Board (9,9) initialArray

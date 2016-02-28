@@ -22,9 +22,9 @@ class Slicer s where
 class Mover m where
     move :: Move -> Board m e a s -> (Board m e a s, [Kind])
 class Effector e where
-    effect :: Coord -> Board m e a s -> Board m e a s
+    effect :: Coord -> Coord -> Board m e a s -> Board m e a s
     effectPut :: Coord -> Board m e a s -> Board m e a s
-    effectPut = effect
+    effectPut = effect (error "Define `effectPut` for Effector if `effect` uses `from` parameter")
 
 unsafeGet :: Board m e a s -> Coord -> Piece
 get :: Board m e a s -> Coord -> Cell
@@ -33,3 +33,4 @@ sets :: Board m e a s -> [(Coord, Cell)] -> Board m e a s
 addCoord :: Color -> Coord -> Coord -> Coord
 inRange :: Board m e a s -> Coord -> Bool
 bounds :: Board m e a s -> (Coord, Coord)
+destinationsAt :: Board m e a s -> Coord -> [Coord]

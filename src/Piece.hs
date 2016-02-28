@@ -1,4 +1,4 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, uniqueMoveDef) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, promoteReverse, uniqueMoveDef) where
 
 import Color(Color(..))
 import Coord
@@ -36,7 +36,9 @@ moveDefs _ True = kin
 
 data Piece = Piece Color Promoted Kind deriving (Eq)
 promote :: Promoted -> Piece -> Piece
-promote promoted (Piece color _ kind) = Piece color promoted kind
+promote promoted (Piece color _ kind) = Piece color (canPromote kind && promoted) kind
+promoteReverse :: Piece -> Piece
+promoteReverse (Piece color promoted kind) = Piece color (canPromote kind && not promoted) kind
 instance Show Piece where
     show (Piece color promoted kind) = show color++showKind promoted kind
 
@@ -48,6 +50,11 @@ showKind True KE = "NK"
 showKind True GI = "NG"
 showKind True KA = "UM"
 showKind True HI = "RY"
+
+canPromote :: Kind -> Bool
+canPromote OU = False
+canPromote KI = False
+canPromote _ = True
 
 uniqueMoveDef :: [MoveDef] -> [MoveDef]
 uniqueMoveDef a = uniq$ sort a

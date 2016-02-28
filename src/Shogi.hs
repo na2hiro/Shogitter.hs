@@ -57,7 +57,7 @@ getNext :: Shogi m e a s mp -> [Shogi m e a s mp]
 getNext board = [unsafeDoMove move board | move <- getMoves board]
 
 unsafeDoMove :: Move -> Shogi m e a s mp -> Shogi m e a s mp
-unsafeDoMove mv@(Move from to promoted) (Shogi turn board hands) = Shogi turn' (effect to board') hands'
+unsafeDoMove mv@(Move from to promoted) (Shogi turn board hands) = Shogi turn' (effect from to board') hands'
     where turn' = opposite turn
           (board', kinds) = move mv board
           hands' = foldr (addToHands turn) hands kinds
