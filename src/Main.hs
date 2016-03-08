@@ -5,9 +5,16 @@ import Board
 import Coord
 import Piece(Kind(FU))
 import System.Environment(getArgs)
+import Search.MaterialAlphaBeta
 
 main :: IO ()
 main = do
+    args <- getArgs
+    let num = read (args!!0) :: Int
+    print$ alphaBeta (initialShogi :: NormalShogi) num
+
+mainNumberOfBoards :: IO ()
+mainNumberOfBoards = do
     args <- getArgs
     let num = read (args!!0) :: Int
     putStrLn$ show$ length$ te num

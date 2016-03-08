@@ -1,7 +1,7 @@
-module Hands(Hands, kindsHand, addToHands, removeFromHands, initialHands) where
+module Hands(Hands, kindsHand, addToHands, removeFromHands, initialHands, Hands.toList) where
 
 import Piece(Color(..), Kind)
-import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey, keys)
+import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey, keys, toList)
 import Control.Arrow((***))
 import Control.Monad(liftM, liftM2)
 import Data.Functor.Identity
@@ -48,3 +48,6 @@ addToHands color = applyHand color. addToHand
 
 removeFromHands :: Color -> Kind -> Hands -> Maybe Hands
 removeFromHands color = applyHandM color. removeFromHand
+
+toList :: Color -> Hands -> [(Kind, Int)]
+toList color hands = M.toList$ getHand color hands
