@@ -33,11 +33,11 @@ instance Effector OthelloEffector where
 nipping8 = nipping eightDirections
 nipping4 = nipping fourDirections
 
-nipping :: [Coord] -> Board m e a s -> Coord -> [(Coord, Cell)]
+nipping :: [Coord] -> Board m e a s mp -> Coord -> [(Coord, Cell)]
 nipping directions board to = concatMap (sliceNipped color board to) directions
     where Piece color _ _ = unsafeGet board to
 
-sliceNipped :: Color -> Board m e a s -> Coord -> Coord -> [(Coord, Cell)]
+sliceNipped :: Color -> Board m e a s mp -> Coord -> Coord -> [(Coord, Cell)]
 sliceNipped color board@(Board _ _) base vector = nipped color$ slice board base vector
 
 nipped :: Color -> [(Coord, Cell)] -> [(Coord, Cell)]
@@ -53,11 +53,11 @@ instance Effector GoEffector where
 empty :: Coord -> (Coord, Cell)
 empty c = (c, Nothing)
 
-surrounding :: SurroundType m e a s -> Board m e a s -> Coord -> [Coord]
+surrounding :: SurroundType m e a s mp -> Board m e a s mp -> Coord -> [Coord]
 surrounding by board coord = concatMap (surrounded by board color. (coord +)) fourDirections
     where Piece color _ _ = unsafeGet board coord -- do not evaluate color for `surrounding bySpace` call
 
-surrounded :: SurroundType m e a s -> Board m e a s -> Color -> Coord -> [Coord]
+surrounded :: SurroundType m e a s mp -> Board m e a s mp -> Color -> Coord -> [Coord]
 surrounded by board@(Board _ _) color coord = maybe [] S.toList$ surrounded' S.empty coord
     where surrounded' :: S.Set Coord -> Coord -> Maybe (S.Set Coord)
           surrounded' set c | (c `elem` set)  = Just set
@@ -68,9 +68,9 @@ surrounded by board@(Board _ _) color coord = maybe [] S.toList$ surrounded' S.e
 
 data Surrounded = Surrounded | NotSurrounded | Keep
 
-type SurroundType m e a s = Board m e a s -> Color -> Coord -> Surrounded
+type SurroundType m e a s mp = Board m e a s mp -> Color -> Coord -> Surrounded
 
-byEnemy :: SurroundType m e a s
+byEnemy :: SurroundType m e a s mp
 byEnemy board color c | not (board `inRange` c) || surrounderColor cell = Surrounded
                       | Nothing <- cell = NotSurrounded
                       | otherwise = Keep
@@ -78,7 +78,7 @@ byEnemy board color c | not (board `inRange` c) || surrounderColor cell = Surrou
           surrounderColor (Just (Piece color' _ _)) | color==color' = True
           surrounderColor _ = False
 
-bySpace :: Board m e a s -> Color -> Coord -> Surrounded
+bySpace :: Board m e a s mp -> Color -> Coord -> Surrounded
 bySpace board _ c | not (board `inRange` c) = NotSurrounded
                   | Nothing <- get board c = Surrounded
                   | otherwise = Keep
@@ -112,7 +112,7 @@ data GravityEffector
 instance Effector GravityEffector where
     effect _ _ board = sets board$ gravity board
 
-gravity :: Board m e a s -> [(Coord, Cell)]
+gravity :: Board m e a s mp -> [(Coord, Cell)]
 gravity board@(Board (x,y) v) = concatMap gravityRow [1..y]
     where gravityRow y = zip coords$ candidates++repeat Nothing
             where candidates = filter isJust$ map (get board) coords

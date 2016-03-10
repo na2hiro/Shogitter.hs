@@ -9,9 +9,9 @@ import Board.Slicer(NormalSlicer)
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Mover(NormalMover)
 import Board.Effector
-import Shogi.MoverPredicator(NormalMoverPredicator)
+import Board.MoverPredicator(NormalMoverPredicator)
 
-type NBoard e = Board NormalMover e NormalAbilityProxy NormalSlicer
+type NBoard e = Board NormalMover e NormalAbilityProxy NormalSlicer NormalMoverPredicator
 
 from :: Coord
 from = undefined

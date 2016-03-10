@@ -9,8 +9,9 @@ import Board.Slicer
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Mover(NormalMover)
 import Board.Effector(NormalEffector)
+import Board.MoverPredicator(NormalMoverPredicator)
 
-type NBoard s = Board NormalMover NormalEffector NormalAbilityProxy s
+type NBoard s = Board NormalMover NormalEffector NormalAbilityProxy s NormalMoverPredicator
 
 spec :: Spec
 spec = do

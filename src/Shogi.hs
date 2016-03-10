@@ -6,7 +6,7 @@ import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Slicer(NormalSlicer)
 import Board.Mover(NormalMover)
 import Board.Effector(NormalEffector)
-import Shogi.MoverPredicator(NormalMoverPredicator)
+import Board.MoverPredicator(NormalMoverPredicator)
 import Piece
 import Hands
 import Color
@@ -17,16 +17,12 @@ import Data.Maybe(isNothing)
 type Turn = Color
 
 data Shogi m e a s mp where
-    Shogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) => Turn -> Board m e a s -> Hands -> Shogi m e a s mp
+    Shogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) => Turn -> Board m e a s mp -> Hands -> Shogi m e a s mp
 instance Eq (Shogi m e a s mp) where
     Shogi t b h == Shogi t' b' h' = t==t' && b==b' && h==h'
 instance Show (Shogi m e a s mp) where
     show (Shogi turn board hands) = show board ++ show hands ++ show turn ++ "\n"
 
-class MoverPredicator mp where
-    canMove :: Shogi m e a s mp -> (Coord, Piece) -> Bool
-    canMoveCoord :: Shogi m e a s mp -> Coord -> Bool
-    canMoveCoord shogi@(Shogi _ board _) coord = canMove shogi (coord, unsafeGet board coord)
 
 type NormalShogi = Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator
 
@@ -45,13 +41,13 @@ getMovesFrom :: Shogi m e a s mp -> Coord -> [Move]
 getMovesFrom shogi@(Shogi _ board _) from = getMovesFrom' shogi from$ unsafeGet board from
 
 getMovesFrom' :: Shogi m e a s mp -> Coord -> Piece -> [Move]
-getMovesFrom' shogi@(Shogi _ board _) from p@(Piece color _ _) = do
-    guard$ canMove' (from, p)
+getMovesFrom' shogi@(Shogi turn board _) from p@(Piece color _ _) = do
+    guard$ color == turn
+    guard$ canMove board (from, p)
     dest <- destinationsAt board from
     if canPromote color board from || canPromote color board dest
         then map (Move from dest) [True,False]
         else return$ Move from dest False
-    where canMove' = canMove shogi
 
 getNext :: Shogi m e a s mp -> [Shogi m e a s mp]
 getNext board = [unsafeDoMove move board | move <- getMoves board]
