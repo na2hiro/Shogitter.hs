@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 module Shogi where
 
-import Board
+import Board(Board, Mover, move, Effector, AbilityProxy, Slicer, MoverPredicator, Move(..), initialBoard, getMoves, isLegalMove)
 import Board.AbilityProxy(NormalAbilityProxy)
 import Board.Slicer(NormalSlicer)
 import Board.Mover(NormalMover)
@@ -11,7 +11,6 @@ import Piece
 import Hands
 import Color
 import Control.Monad(guard)
-import Data.Maybe(isNothing)
 
 type Turn = Color
 
@@ -27,32 +26,23 @@ type NormalShogi = Shogi NormalMover NormalEffector NormalAbilityProxy NormalSli
 initialShogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) => Shogi m e a s mp
 initialShogi = Shogi Black initialBoard initialHands
 
-getMoves :: Shogi m e a s mp -> [Move]
-getMoves (Shogi turn board hands) = do
-    (from, cell) <- cells board
-    case cell of
-        Nothing -> map (Put from) kinds
-        Just p@(Piece color _ _) | turn == color -> getMovesFrom' board from p
-        _ -> []
-    where kinds = kindsHand turn hands
+getMovesShogi :: Shogi m e a s mp -> [Move]
+getMovesShogi (Shogi turn board hands) = getMoves turn board$ kindsHand turn hands
 
 getNext :: Shogi m e a s mp -> [Shogi m e a s mp]
-getNext shogi = [unsafeDoMove move shogi | move <- getMoves shogi]
+getNext shogi = [unsafeDoMove move shogi | move <- getMovesShogi shogi]
 
 unsafeDoMove :: Move -> Shogi m e a s mp -> Shogi m e a s mp
-unsafeDoMove mv@(Move from to _) (Shogi turn board hands) = Shogi turn' (effect from to board') hands'
+unsafeDoMove mv (Shogi turn board hands) = Shogi turn' board' hands'
     where turn' = opposite turn
-          (board', kinds) = move mv board
+          (board', kinds) = move turn mv board
           hands' = foldr (addToHands turn) hands kinds
-unsafeDoMove (Put to kind) (Shogi turn board hands) = Shogi (opposite turn) (effectPut to board') hands'
-    where Just hands' = removeFromHands turn kind hands
-          board' = set board (to, Just$ Piece turn False kind)
 
 doMove :: Move -> Shogi m e a s mp -> Maybe (Shogi m e a s mp)
-doMove move@(Move from _ _) shogi@(Shogi _ board _) = do
-    guard$ board `inRange` from && move `elem` getMovesFrom board from
+doMove move shogi@(Shogi _ board _) = do
+    guard$ isLegalMove board move
     return$ unsafeDoMove move shogi
-doMove move@(Put to kind) shogi@(Shogi turn board hands) = do
-    guard$ board `inRange` to && isNothing (get board to)
+doMove move@(Put _ kind) shogi@(Shogi turn board hands) = do
+    guard$ isLegalMove board move
     _ <- removeFromHands turn kind hands
     return$ unsafeDoMove move shogi

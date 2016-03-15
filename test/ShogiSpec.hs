@@ -10,4 +10,4 @@ initial = initialShogi
 spec :: Spec
 spec = do
     describe "getMoves"$ do
-        it "moves on initial board"$ length (getMoves initial) `shouldBe` 30
+        it "moves on initial board"$ length (getMovesShogi initial) `shouldBe` 30

@@ -24,7 +24,7 @@ te 0 = [initialShogi]
 te n = concatMap getNext$ te$ n-1
 
 main2 :: IO ()
-main2 = putStrLn$ concatMap show [te0, te1, te2, te3, te4]++show (getMoves te0) ++ "te1s"++show te1s ++ "te2s" ++ show te2s
+main2 = putStrLn$ concatMap show [te0, te1, te2, te3, te4]++show (getMovesShogi te0) ++ "te1s"++show te1s ++ "te2s" ++ show te2s
     where te0 = initialShogi :: NormalShogi
           te1 = unsafeDoMove (Move (Coord 7 7) (Coord 7 1) True) te0
           te2 = unsafeDoMove (Move (Coord 6 1) (Coord 7 1) False) te1

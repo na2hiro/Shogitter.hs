@@ -21,7 +21,7 @@ class Slicer s where
     slice board base vec = map (\coord -> (coord, get coord board))$ sliceAsCoord board base vec
     regularity :: Board m e a s mp -> Bool
 class Mover m where
-    move :: Move -> Board m e a s mp -> (Board m e a s mp, [Kind])
+    move :: Color -> Move -> Board m e a s mp -> (Board m e a s mp, [Kind])
 class Effector e where
     effect :: Coord -> Coord -> Board m e a s mp -> Board m e a s mp
     effectPut :: Coord -> Board m e a s mp -> Board m e a s mp
@@ -35,6 +35,7 @@ unsafeGet :: Board m e a s mp -> Coord -> Piece
 get :: Board m e a s mp -> Coord -> Cell
 safeGet :: Board m e a s mp -> Coord -> Cell
 sets :: Board m e a s mp -> [(Coord, Cell)] -> Board m e a s mp
+set :: Board m e a s mp -> (Coord, Cell) -> Board m e a s mp
 addCoord :: Color -> Coord -> Coord -> Coord
 inRange :: Board m e a s mp -> Coord -> Bool
 bounds :: Board m e a s mp -> (Coord, Coord)

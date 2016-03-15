@@ -11,6 +11,7 @@ import Board.MoverPredicator(NormalMoverPredicator)
 import Data.Vector as V(Vector, fromList, toList, (!), (//))
 import Data.List(transpose, nub)
 import Data.Ix as Ix(inRange)
+import Data.Maybe(isNothing)
 import Control.Arrow(first)
 import Control.Monad(guard)
 
@@ -43,7 +44,7 @@ class Slicer s where
     regularity :: Board m e a s mp -> Bool
 
 class Mover m where
-    move :: Move -> Board m e a s mp -> (Board m e a s mp, [Kind])
+    move :: Color -> Move -> Board m e a s mp -> (Board m e a s mp, [Kind])
 
 class Effector e where
     effect :: Coord -> Coord -> Board m e a s mp -> Board m e a s mp
@@ -98,6 +99,14 @@ coordToInt (Board (xMax, _) _) (Coord x y) = xMax*(x-1)+y-1
 intToCoord :: Board m e a s mp -> Int -> Coord
 intToCoord (Board (xMax, _) _) n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
 
+getMoves :: Color -> Board m e a s mp -> [Kind] -> [Move]
+getMoves turn board kinds = do
+    (from, cell) <- cells board
+    case cell of
+        Nothing -> map (Put from) kinds
+        Just (Piece color _ _) | turn == color -> getMovesFrom board from
+        _ -> []
+
 getMovesFrom :: Board m e a s mp -> Coord -> [Move]
 getMovesFrom board from = getMovesFrom' board from$ unsafeGet board from
 
@@ -130,6 +139,10 @@ destinationsAt' board@(Board _ _) from = do
           takeW ((to, Just (Piece color' _ _)):_) | color==color' = []
                                                   | otherwise = [to]
           takeW ((to,_):xs) = to:takeW xs
+
+isLegalMove :: Board m e a s mp -> Move -> Bool
+isLegalMove board move@(Move from _ _) = board `Board.inRange` from && move `elem` getMovesFrom board from
+isLegalMove board (Put to _) = board `Board.inRange` to && isNothing (get board to)
 
 addCoord :: Color -> Coord -> Coord -> Coord
 addCoord Black x v = x+v
