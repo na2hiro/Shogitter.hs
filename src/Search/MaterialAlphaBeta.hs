@@ -17,11 +17,11 @@ instance Game_tree (Shogi m e a s mp) where
     children = getNext
 
 evaluate :: Shogi m e a s mp -> Int
-evaluate shogi@(Shogi turn board hands) = (if turn==Black then 1 else -1)* (handValue Black - handValue White + boardValue)
+evaluate (Shogi turn board hands) = (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
           handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color hands
           boardValue = sum$ do
-              (c, piece) <- cells board
+              (_, piece) <- cells board
               case piece of
                   Just (Piece Black promoted kind) -> return$ value kind promoted
                   Just (Piece White promoted kind) -> return$ -value kind promoted

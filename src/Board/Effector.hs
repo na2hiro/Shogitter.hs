@@ -14,11 +14,10 @@ import Coord.Const(fourDirections, eightDirections)
 import Piece(Piece(..), promoteReverse)
 import Color(Color(..))
 import Coord
-import Coord.Const
-import Data.List(concatMap)
+import Coord.Const(forward)
 import qualified Data.Set as S
 import Control.Monad(foldM)
-import Data.Maybe(maybe, isNothing, isJust)
+import Data.Maybe(isJust)
 
 data NormalEffector
 instance Effector NormalEffector where
@@ -113,7 +112,7 @@ instance Effector GravityEffector where
     effect _ _ board = sets board$ gravity board
 
 gravity :: Board m e a s mp -> [(Coord, Cell)]
-gravity board@(Board (x,y) v) = concatMap gravityRow [1..y]
+gravity board@(Board (x,y) _) = concatMap gravityRow [1..y]
     where gravityRow y = zip coords$ candidates++repeat Nothing
             where candidates = filter isJust$ map (get board) coords
                   coords = map (flip Coord y) [1..x]

@@ -13,3 +13,4 @@ instance Mover NormalMover where
               toPiece = Just$ promote promoted fromPiece
               kinds = map getKind$ maybeToList$ get board to
               getKind (Piece _ _ kind) = kind
+    move (Put _ _) _ = error "put is not supported for Put"

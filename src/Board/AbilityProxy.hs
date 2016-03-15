@@ -18,8 +18,7 @@ import Coord.Const(forward, backward, right, left)
 import Color(Color)
 import Piece(Piece(..), Kind, Promoted)
 import {-# SOURCE #-} Board
-import Control.Monad(mplus)
-import Data.Maybe(maybeToList, isJust, catMaybes, mapMaybe)
+import Data.Maybe(isJust, mapMaybe)
 
 data NormalAbilityProxy
 instance AbilityProxy NormalAbilityProxy where
@@ -83,13 +82,13 @@ instance AbilityProxy YokoNekosenAbilityProxy where
 
 data NekonekosenAbilityProxy
 instance AbilityProxy NekonekosenAbilityProxy where
-    abilityProxy color c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c) (getY c+backwards-forwards)]
+    abilityProxy _ c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c) (getY c+backwards-forwards)]
         where forwards = length$ sliceWhile c forward isJust b
               backwards = length$ sliceWhile c backward isJust b
 
 data YokoNekonekosenAbilityProxy
 instance AbilityProxy YokoNekonekosenAbilityProxy where
-    abilityProxy color c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c+lefts-rights) (getY c)]
+    abilityProxy _ c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c+lefts-rights) (getY c)]
         where rights = length$ sliceWhile c right isJust b
               lefts = length$ sliceWhile c left isJust b
 

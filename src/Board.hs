@@ -12,6 +12,7 @@ import Data.Vector as V(Vector, fromList, toList, (!), (//))
 import Data.List(transpose, nub)
 import Data.Ix as Ix(inRange)
 import Control.Arrow(first)
+import Control.Monad(guard)
 
 type Cell = Maybe Piece
 data Move = Move Coord Coord Promoted | Put Coord Kind deriving (Show, Eq)
@@ -66,16 +67,16 @@ initialArray = fromList. concat. transpose$ gote++replicate 3 four++sente
           gote :: [[Cell]]
           gote =  map (map (fmap (Piece White False))) [one,two,three]
           sente :: [[Cell]]
-          sente = reverse$ map (reverse . map (fmap (\(Piece color _ kind)->Piece Black False kind))) gote
+          sente = reverse$ map (reverse . map (fmap (\(Piece _ _ kind)->Piece Black False kind))) gote
 
 unsafeGet :: Board m e a s mp -> Coord -> Piece
 unsafeGet b c = let Just p = get b c in p
 
 get :: Board m e a s mp -> Coord -> Cell
-get b@(Board size v) c = v!coordToInt b c
+get b@(Board _ v) c = v!coordToInt b c
 
 safeGet :: Board m e a s mp -> Coord -> Cell
-safeGet b@(Board _ v) c = if b `Board.inRange` c then get b c else Nothing
+safeGet b c = if b `Board.inRange` c then get b c else Nothing
 
 set :: Board m e a s mp -> (Coord, Cell) -> Board m e a s mp
 set b cp = sets b [cp]
@@ -87,7 +88,7 @@ inRange :: Board m e a s mp -> Coord -> Bool
 inRange board = Ix.inRange$ bounds board
 
 bounds :: Board m e a s mp -> (Coord, Coord)
-bounds (Board size vec) = (Coord 1 1, uncurry Coord size)
+bounds (Board size _) = (Coord 1 1, uncurry Coord size)
 
 cells :: Board m e a s mp -> [(Coord, Cell)]
 cells b@(Board _ vec) = zip (map (intToCoord b) [0..])$ toList vec
@@ -96,6 +97,17 @@ coordToInt :: Board m e a s mp -> Coord -> Int
 coordToInt (Board (xMax, _) _) (Coord x y) = xMax*(x-1)+y-1
 intToCoord :: Board m e a s mp -> Int -> Coord
 intToCoord (Board (xMax, _) _) n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
+
+getMovesFrom :: Board m e a s mp -> Coord -> [Move]
+getMovesFrom board from = getMovesFrom' board from$ unsafeGet board from
+
+getMovesFrom' :: Board m e a s mp -> Coord -> Piece -> [Move]
+getMovesFrom' board@Board{} from p@(Piece color _ _) = do
+    guard$ canMove board (from, p)
+    dest <- destinationsAt board from
+    if canPromote color board from || canPromote color board dest
+        then map (Move from dest) [True,False]
+        else return$ Move from dest False
 
 destinationsAt :: Board m e a s mp -> Coord -> [Coord]
 destinationsAt board@(Board _ _) from | regularity board = destinationsAt' board from
@@ -109,7 +121,7 @@ destinationsAt' board@(Board _ _) from = do
     case moveDef of
         Exact vec -> take 1$ dests from (direct color vec)
         Slide vec -> dests from (direct color vec)
-    where Piece color _ kind = unsafeGet board from
+    where Piece color _ _ = unsafeGet board from
           abilities = abilityProxy color from board
           dests :: Coord -> Coord -> [Coord]
           dests from vec = takeW$ slice board from vec

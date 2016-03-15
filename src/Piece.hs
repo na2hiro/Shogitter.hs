@@ -66,5 +66,3 @@ uniqueMoveDef a = uniq$ sort a
                 _ -> uniq (x:xs)
               else x:uniq(y:xs)
           sameC md1 md2 = getCoord md1 == getCoord md2
-          isExact (Exact _) = True
-          isExact _ = False
