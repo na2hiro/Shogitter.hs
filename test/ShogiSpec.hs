@@ -4,8 +4,8 @@ import Test.Hspec
 import Shogi
 import Board
 
-initial :: NormalShogi
-initial = initialShogi
+initial :: Shogi
+initial = normalShogi
 
 spec :: Spec
 spec = do

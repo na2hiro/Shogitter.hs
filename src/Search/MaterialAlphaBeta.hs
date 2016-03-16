@@ -1,27 +1,27 @@
 module Search.MaterialAlphaBeta(alphaBeta) where
 
 import Shogi(getNext, Shogi(..))
-import Board(cells)
+import Board(cellsI)
 import Hands(toList)
 import Piece(Kind(..), Piece(..), Promoted)
 import Color(Color(..))
 import Data.Tree.Game_tree.Game_tree(Game_tree(..))
 import Data.Tree.Game_tree.Negascout(negascout)
 
-alphaBeta :: Shogi m e a s mp -> Int -> ([Shogi m e a s mp], Int)
+alphaBeta :: Shogi -> Int -> ([Shogi], Int)
 alphaBeta = negascout
 
-instance Game_tree (Shogi m e a s mp) where
+instance Game_tree Shogi where
     is_terminal _ = False
     node_value = evaluate
     children = getNext
 
-evaluate :: Shogi m e a s mp -> Int
+evaluate :: Shogi -> Int
 evaluate (Shogi turn board hands) = (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
           handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color hands
           boardValue = sum$ do
-              (_, piece) <- cells board
+              (_, piece) <- cellsI board
               case piece of
                   Just (Piece Black promoted kind) -> return$ value kind promoted
                   Just (Piece White promoted kind) -> return$ -value kind promoted
