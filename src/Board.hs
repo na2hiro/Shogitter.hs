@@ -32,18 +32,6 @@ instance Show (Board m e a s mp) where
         where showCell Nothing = " * "
               showCell (Just p) = show p
 
-class Show b => BoardI b where
-    moveI :: Color -> Move -> b -> (b, [Kind])
-    getMovesI :: Color -> b -> [Kind] -> [Move]
-    isLegalMoveI :: b -> Move -> Bool
-    cellsI :: b -> [(Coord, Cell)]
-
-instance (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) => BoardI (Board m e a s mp) where
-    moveI = move
-    getMovesI = getMoves
-    isLegalMoveI = isLegalMove
-    cellsI = cells
-
 type NormalBoard = Board NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator
 
 class AbilityProxy a where
