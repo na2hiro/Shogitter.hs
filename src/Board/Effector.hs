@@ -10,11 +10,10 @@ module Board.Effector
     ) where
 
 import {-# SOURCE #-}Board
-import Coord.Const(fourDirections, eightDirections)
+import Coord.Const(fourDirections, eightDirections, forward)
 import Piece(Piece(..), promoteReverse)
 import Color(Color(..))
 import Coord
-import Coord.Const(forward)
 import qualified Data.Set as S
 import Control.Monad(foldM)
 import Data.Maybe(isJust)

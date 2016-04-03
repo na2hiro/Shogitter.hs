@@ -41,6 +41,17 @@ class Slicer s where
     sliceAsCoord :: Board m e a s mp -> Coord -> Coord -> [Coord]
     slice :: Board m e a s mp -> Coord -> Coord -> [(Coord, Cell)]
     slice board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoord board base vec
+    sliceFinite :: Board m e a s mp -> Coord -> Coord -> [(Coord, Cell)]
+    sliceFinite board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoordFinite board base vec
+    sliceAsCoordFinite :: Board m e a s mp -> Coord -> Coord -> [Coord]
+    sliceAsCoordFinite board base vec = if regularity board || null slices
+        then slices
+        else f slices
+        where slices = sliceAsCoord board base vec
+              first = head slices
+              f [x] = [x]
+              f (x:y:xs) | base==x && first == y = [x]
+              f (_:y:xs) = f (y:xs)
     regularity :: Board m e a s mp -> Bool
 
 class Mover m where
@@ -106,6 +117,12 @@ getMoves turn board kinds = do
         Nothing -> map (Put from) kinds
         Just (Piece color _ _) | turn == color -> getMovesFrom board from
         _ -> []
+
+getMovesEach :: Board m e a s mp -> ([Kind], [Kind]) -> ([Move], [Move])
+getMovesEach board (kindsB, kindsW) = foldr f ([], [])$ cells board
+    where f (from, Nothing) (bs, ws) = (map (Put from) kindsB++bs, map (Put from) kindsB++ws)
+          f (from, Just (Piece Black _ _)) (bs, ws) = (getMovesFrom board from++bs, ws)
+          f (from, Just (Piece White _ _)) (bs, ws) = (bs, getMovesFrom board from++ws)
 
 getMovesFrom :: Board m e a s mp -> Coord -> [Move]
 getMovesFrom board from = getMovesFrom' board from$ unsafeGet board from

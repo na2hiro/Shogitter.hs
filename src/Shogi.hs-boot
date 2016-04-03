@@ -9,6 +9,13 @@ import Data.Vector(Vector)
 
 type Turn = Color
 
-data Shogi m e a s mp where
-    Shogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) => Turn -> Board m e a s -> Hands -> Shogi m e a s mp
+data Result = Win Color
+            | Even
 
+data Shogi m e a s mp j where
+    Shogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j) => Turn -> Board m e a s mp -> Hands -> Shogi m e a s mp j
+
+class Judge j where
+    judge :: Shogi m e a s mp j -> Maybe Result
+
+getNextWithoutJudge :: Shogi m e a s mp j -> [Shogi m e a s mp j]

@@ -8,15 +8,15 @@ import Color(Color(..))
 import Data.Tree.Game_tree.Game_tree(Game_tree(..))
 import Data.Tree.Game_tree.Negascout(negascout)
 
-alphaBeta :: Shogi m e a s mp -> Int -> ([Shogi m e a s mp], Int)
+alphaBeta :: Shogi m e a s mp j -> Int -> ([Shogi m e a s mp j], Int)
 alphaBeta = negascout
 
-instance Game_tree (Shogi m e a s mp) where
+instance Game_tree (Shogi m e a s mp j) where
     is_terminal _ = False
     node_value = evaluate
     children = getNext
 
-evaluate :: Shogi m e a s mp -> Int
+evaluate :: Shogi m e a s mp j -> Int
 evaluate (Shogi turn board hands) = (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
           handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color hands
