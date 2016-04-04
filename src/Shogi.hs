@@ -45,10 +45,14 @@ getNextWithoutJudge :: Shogi m e a s mp j -> [Shogi m e a s mp j]
 getNextWithoutJudge = getNext -- TODO: exclude judge
 
 unsafeDoMove :: Move -> Shogi m e a s mp j -> Shogi m e a s mp j
-unsafeDoMove mv (Shogi turn board hands) = Shogi turn' board' hands'
+unsafeDoMove mv@Move{} (Shogi turn board hands) = Shogi turn' board' hands'
     where turn' = opposite turn
           (board', kinds) = move turn mv board
           hands' = foldr (addToHands turn) hands kinds
+unsafeDoMove mv@(Put _ kind) (Shogi turn board hands) = Shogi turn' board' hands'
+    where turn' = opposite turn
+          (board', kinds) = move turn mv board
+          Just hands' = removeFromHands turn kind$ foldr (addToHands turn) hands kinds
 
 doMove :: Move -> Shogi m e a s mp j -> Maybe (Shogi m e a s mp j)
 doMove move@Move{} shogi@(Shogi _ board _) = do
