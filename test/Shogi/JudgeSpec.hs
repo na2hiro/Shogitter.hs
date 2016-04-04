@@ -35,8 +35,8 @@ spec = do
             initial' = initialShogi :: UnderWaterShogi AbsentJudge
             s' = unsafeDoMove (Move (Coord 5 9) (Coord 5 5) False) initial' in do
         it "initial"$ judge initial `shouldBe` Nothing
-        it "pick enemy"$ judge s `shouldBe` Just (Win Black)
-        it "lost my OU"$ judge s' `shouldBe` Just (Win White)
+        it "pick enemy"$ judge s `shouldBe` Just Win
+        it "lost my OU"$ judge s' `shouldBe` Just Lose
 
     describe "MateJudge"$
         let initial = initialShogi :: NShogi MateJudge
@@ -44,9 +44,9 @@ spec = do
             s' = unsafeDoMove (Move (Coord 5 9) (Coord 5 4) False) initial
             s'' = unsafeDoMove (Move (Coord 5 9) (Coord 5 2) False) initial in do
         it "initial"$ judge initial `shouldBe` Nothing
-        it "mate enemy"$ judge s `shouldBe` Just (Win Black)
-        it "mate me"$ judge s' `shouldBe` Just (Win White)
-        it "mate both"$ judge s'' `shouldBe` Just (Win White)
+        it "mate enemy"$ judge s `shouldBe` Just Win
+        it "mate me"$ judge s' `shouldBe` Just Lose
+        it "mate both"$ judge s'' `shouldBe` Just Lose
         it "lost my OU"$ pendingWith "multiple judges"
         it "lost enemy's OU"$ pendingWith "multiple judges"
 
@@ -60,9 +60,9 @@ spec = do
             s' = unsafeDoMove (Move (Coord 5 9) (Coord 5 4) False) initial
             s'' = unsafeDoMove (Move (Coord 5 9) (Coord 5 2) False) initial in do
         it "initial"$ judge initial `shouldBe` Nothing
-        it "check mate enemy"$ judge s `shouldBe` Just (Win Black)
-        it "mate me"$ judge s' `shouldBe` Just (Win White)
-        it "mate both"$ judge s'' `shouldBe` Just (Win White)
+        it "check mate enemy"$ judge s `shouldBe` Just Win
+        it "mate me"$ judge s' `shouldBe` Just Lose
+        it "mate both"$ judge s'' `shouldBe` Just Lose
         it "lost my OU"$ pendingWith "multiple judges"
         it "lost enemy's OU"$ pendingWith "multiple judges"
 
@@ -72,8 +72,8 @@ spec = do
             s = multipleUnsafeDoMove initial moves
             s' = unsafeDoMove (Move (Coord 6 8) (Coord 5 1) False) s in do
         it "initial"$ judge initial `shouldBe` Nothing
-        it "try"$ judge s `shouldBe` Just (Win White)
-        it "try both"$ judge s' `shouldBe` Just (Win White)
+        it "try"$ judge s `shouldBe` Just Win
+        it "try both"$ judge s' `shouldBe` Just Lose
         it "lost my OU"$ pendingWith "multiple judges"
         it "lost enemy's OU"$ pendingWith "multiple judges"
 
@@ -84,7 +84,7 @@ spec = do
             initialB = sets initialBoard diffs :: NormalBoard
             s = Shogi Black initialB initialHands :: NShogi OthelloJudge in do
         it "initial"$ judge initial `shouldBe` Nothing
-        it "win"$ judge s `shouldBe` Just (Win White)
+        it "win"$ judge s `shouldBe` Just Win
 
     describe "GomokuJudge"$
         let initial = initialShogi :: NShogi GomokuJudge
@@ -95,10 +95,10 @@ spec = do
             s' = unsafeDoMove (Move (Coord 4 9) (Coord 5 9) False) s
             s'' = unsafeDoMove (Move (Coord 4 9) (Coord 5 7) False) s
             s''' = unsafeDoMove (Move (Coord 4 9) (Coord 5 3) False) s in do
-        it "initial"$ judge initial `shouldBe` Just (Win Black)
+        it "initial"$ judge initial `shouldBe` Just Lose
         it "no"$ judge s `shouldBe` Nothing
-        it "5"$ judge s' `shouldBe` Just (Win Black)
-        it "5+"$ judge s'' `shouldBe` Just (Win Black)
+        it "5"$ judge s' `shouldBe` Just Win
+        it "5+"$ judge s'' `shouldBe` Just Win
         it "mixed 5"$ judge s''' `shouldBe` Nothing
 
     describe "WinHandCountJudge"$
@@ -107,7 +107,7 @@ spec = do
             s = Shogi Black initialBoard hands :: NShogi WinHandCountJudge
             s' = unsafeDoMove (Move (Coord 8 8) (Coord 3 3) False) s in do
         it "2, 2"$ judge s `shouldBe` Nothing
-        it "3"$ judge s' `shouldBe` Just (Win Black)
+        it "3"$ judge s' `shouldBe` Just Win
 
     describe "LoseHandCountJudge"$
         it ""$ pendingWith "multiple judges"

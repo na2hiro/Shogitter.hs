@@ -15,7 +15,8 @@ import Control.Monad(guard)
 
 type Turn = Color
 
-data Result = Win Color
+data Result = Win
+            | Lose
             | Even
             deriving (Show, Eq)
 

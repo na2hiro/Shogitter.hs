@@ -9,7 +9,8 @@ import Data.Vector(Vector)
 
 type Turn = Color
 
-data Result = Win Color
+data Result = Win
+            | Lose
             | Even
 
 data Shogi m e a s mp j where

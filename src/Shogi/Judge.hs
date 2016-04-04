@@ -30,8 +30,8 @@ instance Judge NormalJudge where
 data AbsentJudge
 instance Judge AbsentJudge where
     judge (Shogi nextTurn board hands)
-        | Nothing <- ouTurn = Just$ Win nextTurn
-        | Nothing <- ouNextTurn = Just$ Win turn
+        | Nothing <- ouTurn = Just Lose
+        | Nothing <- ouNextTurn = Just Win
         | otherwise = Nothing
         where (ouTurn, ouNextTurn) = orderTuple turn$ getOu board
               turn = opposite nextTurn
@@ -53,8 +53,8 @@ pickTuple _ (_, a) = a
 data MateJudge
 instance Judge MateJudge where
     judge shogi@(Shogi nextTurn board hands)
-        | mateTurn = Just$ Win nextTurn
-        | mateNextTurn = Just$ Win turn
+        | mateTurn = Just Lose
+        | mateNextTurn = Just Win
         | otherwise = Nothing
         where turn = opposite nextTurn
               (mateTurn, mateNextTurn) = orderTuple turn$ mate shogi
@@ -71,8 +71,8 @@ mate (Shogi _ board hands) = (coordBlack `elem` tosWhite, coordWhite `elem` tosB
 data CheckMateJudge
 instance Judge CheckMateJudge where
     judge shogi@(Shogi nextTurn board hands)
-        | mateTurn = Just$ Win nextTurn
-        | mateNextTurn && all (pickTuple nextTurn. mate) (getNextWithoutJudge shogi) = Just$ Win turn
+        | mateTurn = Just Lose
+        | mateNextTurn && all (pickTuple nextTurn. mate) (getNextWithoutJudge shogi) = Just Win
         | otherwise = Nothing
         where turn = opposite nextTurn
               (mateTurn, mateNextTurn) = orderTuple turn$ mate shogi
@@ -81,8 +81,8 @@ instance Judge CheckMateJudge where
 data TryJudge
 instance Judge TryJudge where
     judge shogi@(Shogi nextTurn board hands)
-        | tryNextTurn = Just$ Win nextTurn
-        | tryTurn = Just$ Win turn
+        | tryNextTurn = Just Lose
+        | tryTurn = Just Win
         | otherwise = Nothing
         where turn = opposite nextTurn
               (Just (coordBlack, _), Just (coordWhite, _)) = getOu board
@@ -90,10 +90,11 @@ instance Judge TryJudge where
 
 data OthelloJudge
 instance Judge OthelloJudge where
-    judge (Shogi _ b _) = compare <$> countM b
-        where compare (b, w) | b>w = Win Black
-                             | b<w = Win White
-                             | otherwise = Even
+    judge (Shogi nextTurn b _) = compare. orderTuple turn <$> countM b
+        where turn = opposite nextTurn
+              compare (numTurn, numNextTurn) | numTurn>numNextTurn = Win
+                                             | numTurn<numNextTurn = Lose
+                                             | otherwise = Even
 
 countM :: Board m e a s mp -> Maybe (Int, Int)
 countM board = foldM f (0, 0)$ cells board
@@ -103,8 +104,8 @@ countM board = foldM f (0, 0)$ cells board
 
 data GomokuJudge
 instance Judge GomokuJudge where
-    judge (Shogi nextTurn board _) | winNextTurn = Just$ Win nextTurn
-                                   | winTurn = Just$ Win turn
+    judge (Shogi nextTurn board _) | winNextTurn = Just Lose
+                                   | winTurn = Just Win
                                    | otherwise = Nothing
         where turn = opposite nextTurn
               winNextTurn = any (fiveStreak. map (isColor nextTurn)) sliceAll
@@ -130,8 +131,8 @@ fiveStreak = f 0
 data WinHandCountJudge
 instance Judge WinHandCountJudge where
     judge (Shogi nextTurn _ hands)
-        | win nextTurn = Just$ Win nextTurn
-        | win turn = Just$ Win turn
+        | win nextTurn = Just Lose
+        | win turn = Just Win
         | otherwise = Nothing
         where turn = opposite nextTurn
               count hand = foldl' (+) 0$ map snd hand
