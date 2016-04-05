@@ -6,18 +6,22 @@ import Coord
 import Piece(Kind(FU))
 import System.Environment(getArgs)
 import Search.MaterialAlphaBeta
+import Board.AbilityProxy(NormalAbilityProxy)
+import Board.Slicer(NormalSlicer)
+import Board.Mover(NormalMover)
+import Board.Effector(NormalEffector)
+import Board.MoverPredicator(NormalMoverPredicator)
+import Shogi.Judge(NormalJudge)
 
 main :: IO ()
-main = do
-    args <- getArgs
-    let num = read (args!!0) :: Int
-    print$ alphaBeta (initialShogi :: NormalShogi) num
+main = print$ zip [1..]$ iterativeDeepeningAlphaBeta
+    (initialShogi :: Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator NormalJudge)
 
 mainNumberOfBoards :: IO ()
 mainNumberOfBoards = do
     args <- getArgs
-    let num = read (args!!0) :: Int
-    putStrLn$ show$ length$ te num
+    let num = read (head args) :: Int
+    print$ length$ te num
 
 te :: Int -> [NormalShogi]
 te 0 = [initialShogi]

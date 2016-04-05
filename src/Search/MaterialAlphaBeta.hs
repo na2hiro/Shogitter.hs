@@ -1,6 +1,6 @@
-module Search.MaterialAlphaBeta(alphaBeta) where
+module Search.MaterialAlphaBeta(alphaBeta, iterativeDeepeningAlphaBeta) where
 
-import Shogi(getNext, Shogi(..))
+import Shogi(getNext, Shogi(..), Result(..), Judge(..))
 import Board(cells)
 import Hands(toList)
 import Piece(Kind(..), Piece(..), Promoted)
@@ -8,16 +8,27 @@ import Color(Color(..))
 import Data.Tree.Game_tree.Game_tree(Game_tree(..))
 import Data.Tree.Game_tree.Negascout(negascout)
 
-alphaBeta :: Shogi m e a s mp j -> Int -> ([Shogi m e a s mp j], Int)
+alphaBeta :: Judge j => Shogi m e a s mp j -> Int -> ([Shogi m e a s mp j], Int)
 alphaBeta = negascout
 
-instance Game_tree (Shogi m e a s mp j) where
-    is_terminal _ = False
+instance Judge j => Game_tree (Shogi m e a s mp j) where
+    is_terminal shogi = case judge shogi of
+        Just Win -> True
+        _ -> False
     node_value = evaluate
-    children = getNext
+    children shogi = if is_terminal shogi
+        then []
+        else filter notLose$ getNext shogi -- Exclude lose move
+        where notLose s | Just Lose <- judge s = False
+              notLose _ = True
 
-evaluate :: Shogi m e a s mp j -> Int
-evaluate (Shogi turn board hands) = (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
+iterativeDeepeningAlphaBeta :: Judge j => Shogi m e a s mp j -> [([Shogi m e a s mp j], Int)]
+iterativeDeepeningAlphaBeta s = map (alphaBeta s) [1..]
+
+evaluate :: Judge j => Shogi m e a s mp j -> Int
+evaluate shogi@(Shogi turn board hands) = if is_terminal shogi
+    then minBound+4 -- lose
+    else (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
           handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color hands
           boardValue = sum$ do
