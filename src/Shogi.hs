@@ -28,22 +28,25 @@ instance Show History where
 data Diff = Diff DetailedMove deriving (Eq)
 instance Show Diff where
     show (Diff detailedMove) = show detailedMove
-data DetailedMove = DMove Color Coord Coord Kind Promoted (Maybe Kind)
+data DetailedMove = DMove Color Coord Coord Kind Promoted (Maybe (Kind, Promoted))
                   | DPut Color Coord Kind deriving (Eq)
 instance Show DetailedMove where
     show (DMove color from to kind promoted captured) = showCoord from ++ showCoord to ++ show kind
-        ++ (if promoted then "*" else "") ++ (case captured of
-            Just k -> "("++show k++")"
+        ++ showPromoted promoted ++ (case captured of
+            Just (k, promoted') -> "("++show k++ showPromoted promoted' ++ ")"
             Nothing -> "")
         where showCoord (Coord x y) = show x++show y
+              showPromoted True = "*"
+              showPromoted False = ""
 
 initialHistory :: History
 initialHistory = History []
 
 addHistory :: Shogi m e a s mp j -> Move -> History -> History
 addHistory (Shogi _ turn board _) (Move from to promoted) (History diffs) = History$ Diff dMove: diffs
-    where dMove = DMove turn from to (getKind$ unsafeGet board from) promoted (getKind <$> get board to)
+    where dMove = DMove turn from to (getKind$ unsafeGet board from) promoted (getPair <$> get board to)
           getKind (Piece _ _ kind) = kind
+          getPair (Piece _ promoted kind) = (kind, promoted)
 addHistory (Shogi _ turn board _) (Put to kind) (History diffs) = History$ Diff dPut: diffs
     where dPut = DPut turn to kind
 

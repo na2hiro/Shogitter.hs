@@ -15,7 +15,7 @@ data Result = Win
 
 data History = History [Diff]
 data Diff = Diff DetailedMove
-data DetailedMove = DMove Color Coord Coord Kind Promoted (Maybe Kind)
+data DetailedMove = DMove Color Coord Coord Kind Promoted (Maybe (Kind, Promoted))
                   | DPut Color Coord Kind
 
 data Shogi m e a s mp j where
