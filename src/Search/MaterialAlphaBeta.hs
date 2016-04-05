@@ -26,7 +26,7 @@ iterativeDeepeningAlphaBeta :: Judge j => Shogi m e a s mp j -> [([Shogi m e a s
 iterativeDeepeningAlphaBeta s = map (alphaBeta s) [1..]
 
 evaluate :: Judge j => Shogi m e a s mp j -> Int
-evaluate shogi@(Shogi turn board hands) = if is_terminal shogi
+evaluate shogi@(Shogi _ turn board hands) = if is_terminal shogi
     then minBound+4 -- lose
     else (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
