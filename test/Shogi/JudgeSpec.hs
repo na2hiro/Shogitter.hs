@@ -82,7 +82,7 @@ spec = do
             fu color = (Just$ Piece color False FU)
             diffs = [(Coord x y, fu White) | x<-[1..9], y<-[2,4,5]]++[(Coord x y, fu Black)|x<-[1..9], y<-[6,8]]
             initialB = sets initialBoard diffs :: NormalBoard
-            s = Shogi Black initialB initialHands :: NShogi OthelloJudge in do
+            s = Shogi initialHistory Black initialB initialHands :: NShogi OthelloJudge in do
         it "initial"$ judge initial `shouldBe` Nothing
         it "win"$ judge s `shouldBe` Just Win
 
@@ -91,7 +91,7 @@ spec = do
             fu color = (Just$ Piece color False FU)
             diffs = [(Coord 5 y, Nothing) | y<-[1,3,7,9]]
             initialB = sets initialBoard diffs :: NormalBoard
-            s = Shogi Black initialB initialHands :: NShogi GomokuJudge
+            s = Shogi initialHistory Black initialB initialHands :: NShogi GomokuJudge
             s' = unsafeDoMove (Move (Coord 4 9) (Coord 5 9) False) s
             s'' = unsafeDoMove (Move (Coord 4 9) (Coord 5 7) False) s
             s''' = unsafeDoMove (Move (Coord 4 9) (Coord 5 3) False) s in do
@@ -104,7 +104,7 @@ spec = do
     describe "WinHandCountJudge"$
         let fu color = (Just$ Piece color False FU)
             hands = foldr (\kind hands->addToHands White kind$ addToHands Black kind hands) initialHands$ replicate 2 FU
-            s = Shogi Black initialBoard hands :: NShogi WinHandCountJudge
+            s = Shogi initialHistory Black initialBoard hands :: NShogi WinHandCountJudge
             s' = unsafeDoMove (Move (Coord 8 8) (Coord 3 3) False) s in do
         it "2, 2"$ judge s `shouldBe` Nothing
         it "3"$ judge s' `shouldBe` Just Win
