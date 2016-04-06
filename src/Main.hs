@@ -12,10 +12,23 @@ import Board.Mover(NormalMover)
 import Board.Effector(NormalEffector)
 import Board.MoverPredicator(NormalMoverPredicator)
 import Shogi.Judge(NormalJudge)
+import Data.Tree.Game_tree.Game_tree(Game_tree(..))
 
 main :: IO ()
-main = print$ zip [1..]$ iterativeDeepeningAlphaBeta
-    (initialShogi :: Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator NormalJudge)
+main = do
+    args <- getArgs
+    let num = read (args!!0) :: Int
+    let cached = read (args!!1) :: Bool
+    let shogi = initialShogi :: Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator NormalJudge
+    if cached
+        then printAlphaBeta num (cachify shogi)
+        else printAlphaBeta num shogi
+
+printIterativeDeepeningAlphaBeta :: (Game_tree game, Show game) => Int -> game -> IO ()
+printIterativeDeepeningAlphaBeta n shogi = print$ zip [1..n] (iterativeDeepeningAlphaBeta shogi)
+
+printAlphaBeta :: (Game_tree game, Show game) => Int -> game -> IO ()
+printAlphaBeta n shogi = print$ alphaBeta shogi n
 
 mainNumberOfBoards :: IO ()
 mainNumberOfBoards = do

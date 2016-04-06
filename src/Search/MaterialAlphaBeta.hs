@@ -1,14 +1,16 @@
-module Search.MaterialAlphaBeta(alphaBeta, iterativeDeepeningAlphaBeta) where
+module Search.MaterialAlphaBeta(alphaBeta, iterativeDeepeningAlphaBeta, cachify, children, node_value) where
 
-import Shogi(getNext, Shogi(..), Result(..), Judge(..))
-import Board(cells)
+import Shogi(getNext, Shogi(..), Result(..), Judge(..), History(..), Diff(..), DetailedMove(..))
+import Board --(cells)
 import Hands(toList)
 import Piece(Kind(..), Piece(..), Promoted)
 import Color(Color(..))
 import Data.Tree.Game_tree.Game_tree(Game_tree(..))
 import Data.Tree.Game_tree.Negascout(negascout)
 
-alphaBeta :: Judge j => Shogi m e a s mp j -> Int -> ([Shogi m e a s mp j], Int)
+import Debug.Trace(trace)
+
+alphaBeta :: Game_tree g => g -> Int -> ([g], Int)
 alphaBeta = negascout
 
 instance Judge j => Game_tree (Shogi m e a s mp j) where
@@ -22,12 +24,37 @@ instance Judge j => Game_tree (Shogi m e a s mp j) where
         where notLose s | Just Lose <- judge s = False
               notLose _ = True
 
-iterativeDeepeningAlphaBeta :: Judge j => Shogi m e a s mp j -> [([Shogi m e a s mp j], Int)]
-iterativeDeepeningAlphaBeta s = map (alphaBeta s) [1..]
+data CachedShogi m e a s mp j = CachedShogi Int (Shogi m e a s mp j) deriving Show
+
+instance (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j)
+    => Game_tree (CachedShogi m e a s mp j) where
+    is_terminal (CachedShogi _ shogi) = is_terminal shogi
+    node_value (CachedShogi eval _) = eval
+    children (CachedShogi eval shogi) = map cachify'$ children shogi
+        where cachify' shogi@(Shogi (History []) _ _ _) = cachify shogi
+              cachify' shogi@(Shogi (History (diff:_)) _ _ _) = CachedShogi newEval shogi
+                where newEval = if is_terminal shogi then -evalInfinity else evaluateDiff eval diff
+
+evaluateDiff lastEval (Diff (DMove color from to kind promoted captured)) = -valPromote-valCapture-lastEval
+    where valPromote = if promoted then value kind True - value kind False else 0
+          valCapture = case captured of
+            Just (kind', promoted') -> value kind' False + value kind' promoted'
+            Nothing -> 0
+evaluateDiff lastEval _ = -lastEval
+
+cachify :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j)
+    => Shogi m e a s mp j -> CachedShogi m e a s mp j
+cachify shogi = CachedShogi (evaluate shogi) shogi
+
+iterativeDeepeningAlphaBeta :: Game_tree g => g -> [([g], Int)]
+iterativeDeepeningAlphaBeta s = map (negascout s) [1..]
+
+evalInfinity :: Int
+evalInfinity = maxBound-4
 
 evaluate :: Judge j => Shogi m e a s mp j -> Int
 evaluate shogi@(Shogi _ turn board hands) = if is_terminal shogi
-    then minBound+4 -- lose
+    then -evalInfinity -- lose
     else (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
           handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color hands
