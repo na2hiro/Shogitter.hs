@@ -2,11 +2,12 @@ module BoardSpec where
 
 import Test.Hspec
 import Board
+import Board.Const(initialBoard)
 import Coord(Coord(..))
 import Piece(Piece(..), Kind(..))
 import Color(Color(..))
 
-initial :: NormalBoard
+initial :: Board
 initial = initialBoard
 
 spec :: Spec

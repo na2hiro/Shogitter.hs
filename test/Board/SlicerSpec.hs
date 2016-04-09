@@ -1,23 +1,18 @@
 module Board.SlicerSpec where
 
 import Test.Hspec
-import Board(destinationsAt, initialBoard, sets, Board)
+import Board(destinationsAt, sets, Board(..))
+import Board.Const(initialBoard)
 import Piece(Piece(..), Kind(..))
 import Color(Color(..))
 import Coord(Coord(..))
 import Board.Slicer
-import Board.AbilityProxy(NormalAbilityProxy)
-import Board.Mover(NormalMover)
-import Board.Effector(NormalEffector)
-import Board.MoverPredicator(NormalMoverPredicator)
-
-type NBoard s = Board NormalMover NormalEffector NormalAbilityProxy s NormalMoverPredicator
 
 spec :: Spec
 spec = do
     describe "Loop destinationsAt"$
         let diffs = [(Coord 9 7, Nothing), (Coord 1 5, Just$ Piece White False GI)]
-            b = sets initialBoard diffs :: NBoard LoopSlicer in do
+            b = sets initialBoard { getSlicer = loopSlicer } diffs in do
         it "(8,8)"$ destinationsAt b (Coord 8 8) `shouldMatchList`
             [Coord 9 7, Coord 1 6, Coord 2 5, Coord 3 4, Coord 4 3]
         it "(1,5)"$ destinationsAt b (Coord 1 5) `shouldMatchList`
@@ -29,7 +24,7 @@ spec = do
 
     describe "Donut destinationsAt"$
         let diffs = [(Coord 9 7, Nothing), (Coord 7 9, Nothing), (Coord 1 5, Just$ Piece White False HI)]
-            b = sets initialBoard diffs :: NBoard DonutSlicer in do
+            b = sets initialBoard  { getSlicer = donutSlicer } diffs in do
         it "(8,8)"$ destinationsAt b (Coord 8 8) `shouldMatchList`
             [Coord 9 7, Coord 1 6, Coord 2 5, Coord 3 4, Coord 4 3, Coord 7 9, Coord 6 1]
         it "(1,5)"$ destinationsAt b (Coord 1 5) `shouldMatchList`
@@ -40,7 +35,7 @@ spec = do
 
     describe "Reflect destinationsAt"$
         let diffs = [(Coord 9 7, Nothing), (Coord 7 9, Nothing), (Coord 1 5, Just$ Piece White False HI)]
-            b = sets initialBoard diffs :: NBoard ReflectSlicer in do
+            b = sets initialBoard { getSlicer = reflectSlicer } diffs in do
         it "(8,8)"$ destinationsAt b (Coord 8 8) `shouldMatchList`
             [Coord 9 7, Coord 8 6, Coord 7 5, Coord 6 4, Coord 5 3, Coord 7 9, Coord 6 8]
         it "(1,5)"$ destinationsAt b (Coord 1 5) `shouldMatchList`

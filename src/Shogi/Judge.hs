@@ -1,42 +1,43 @@
 module Shogi.Judge
     ( Result(..)
-    , NormalJudge
-    , AbsentJudge
-    , MateJudge
-    , TryJudge
-    , CheckMateJudge
-    , OthelloJudge
-    , GomokuJudge
-    , WinHandCountJudge
+    , normalJudge
+    , absentJudge
+    , mateJudge
+    , tryJudge
+    , checkMateJudge
+    , othelloJudge
+    , gomokuJudge
+    , winHandCountJudge
     ) where
 
-import {-# SOURCE #-}Shogi
+import Shogi
 import Board
 import Coord
 import Coord.Const(eightDirections)
 import Color
 import Piece(Piece(..), Kind(OU))
-import Hands(removeFromHands, toList)
+import Hands(toList)
 import Data.List(foldl')
 import Control.Monad(foldM)
 import Control.Arrow((***))
 
-import Debug.Trace(trace)
-
-data NormalJudge
-instance Judge NormalJudge where
+normalJudge = Judge {
+    runJudge = judge
+} where
     judge _ = Nothing
 
-data AbsentJudge
-instance Judge AbsentJudge where
-    judge (Shogi _ nextTurn board hands)
+absentJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi
         | Nothing <- ouTurn = Just Lose
         | Nothing <- ouNextTurn = Just Win
         | otherwise = Nothing
-        where (ouTurn, ouNextTurn) = orderTuple turn$ getOu board
-              turn = opposite nextTurn
+        where nextTurn = turn shogi
+              (ouTurn, ouNextTurn) = orderTuple currentTurn$ getOu$ board shogi
+              currentTurn = opposite nextTurn
 
-getOu :: Board m e a s mp -> (Maybe (Coord, Cell), Maybe (Coord, Cell))
+getOu :: Board -> (Maybe (Coord, Cell), Maybe (Coord, Cell))
 getOu board = foldl' f (Nothing, Nothing)$ cells board
     where f (_, w) pos@(_, Just (Piece Black _ OU)) = (Just pos, w)
           f (b, _) pos@(_, Just (Piece White _ OU)) = (b, Just pos)
@@ -50,72 +51,84 @@ pickTuple :: Color -> (a, a) -> a
 pickTuple Black (a, _) = a
 pickTuple _ (_, a) = a
 
-data MateJudge
-instance Judge MateJudge where
-    judge shogi@(Shogi _ nextTurn board hands)
+mateJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi
         | mateTurn = Just Lose
         | mateNextTurn = Just Win
         | otherwise = Nothing
-        where turn = opposite nextTurn
-              (mateTurn, mateNextTurn) = orderTuple turn$ mate shogi
+        where nextTurn = turn shogi
+              currentTurn = opposite nextTurn
+              (mateTurn, mateNextTurn) = orderTuple currentTurn$ mate shogi
 
 -- Mate to each color's OU
 -- Precondition: there's 1 OU for each side
-mate :: Shogi m e a s mp j -> (Bool, Bool)
-mate (Shogi _ _ board hands) = (coordBlack `elem` tosWhite, coordWhite `elem` tosBlack)
-        where (tosBlack, tosWhite) = getTo *** getTo$ getMovesEach board ([], [])
+mate :: Shogi -> (Bool, Bool)
+mate shogi = (coordBlack `elem` tosWhite, coordWhite `elem` tosBlack)
+        where b = board shogi
+              hs = hands shogi -- TODO: bug
+              (tosBlack, tosWhite) = getTo *** getTo$ getMovesEach b ([], [])
               getTo = map (\(Move _ to _)->to)
-              (Just (coordBlack, _), Just (coordWhite, _)) = getOu board
+              (Just (coordBlack, _), Just (coordWhite, _)) = getOu$ board shogi
 
 -- Note: No support for multiple OU
-data CheckMateJudge
-instance Judge CheckMateJudge where
-    judge shogi@(Shogi _ nextTurn board hands)
+checkMateJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi
         | mateTurn = Just Lose
         | mateNextTurn && all (pickTuple nextTurn. mate) (getNextWithoutJudge shogi) = Just Win
         | otherwise = Nothing
-        where turn = opposite nextTurn
-              (mateTurn, mateNextTurn) = orderTuple turn$ mate shogi
+        where nextTurn = turn shogi
+              currentTurn = opposite nextTurn
+              (mateTurn, mateNextTurn) = orderTuple currentTurn$ mate shogi
 
 -- TODO: Need to be combined with other rules. Error after OU is caught
-data TryJudge
-instance Judge TryJudge where
-    judge shogi@(Shogi _ nextTurn board hands)
+tryJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi
         | tryNextTurn = Just Lose
         | tryTurn = Just Win
         | otherwise = Nothing
-        where turn = opposite nextTurn
-              (Just (coordBlack, _), Just (coordWhite, _)) = getOu board
-              (tryTurn, tryNextTurn) = orderTuple turn (coordBlack == Coord 5 1, coordWhite == Coord 5 9)
+        where nextTurn = turn shogi
+              currentTurn = opposite nextTurn
+              (Just (coordBlack, _), Just (coordWhite, _)) = getOu$ board shogi
+              (tryTurn, tryNextTurn) = orderTuple currentTurn (coordBlack == Coord 5 1, coordWhite == Coord 5 9)
 
-data OthelloJudge
-instance Judge OthelloJudge where
-    judge (Shogi _ nextTurn b _) = compare. orderTuple turn <$> countM b
-        where turn = opposite nextTurn
+othelloJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi = compare. orderTuple currentTurn <$> countM (board shogi)
+        where nextTurn = turn shogi
+              currentTurn = opposite nextTurn
               compare (numTurn, numNextTurn) | numTurn>numNextTurn = Win
                                              | numTurn<numNextTurn = Lose
                                              | otherwise = Even
 
-countM :: Board m e a s mp -> Maybe (Int, Int)
+countM :: Board -> Maybe (Int, Int)
 countM board = foldM f (0, 0)$ cells board
     where f acc (_, Nothing) = Nothing
           f (b, w) (_, Just (Piece Black _ _)) = Just (b+1, w)
           f (b, w) _ = Just (b, w+1)
 
-data GomokuJudge
-instance Judge GomokuJudge where
-    judge (Shogi _ nextTurn board _) | winNextTurn = Just Lose
-                                   | winTurn = Just Win
-                                   | otherwise = Nothing
-        where turn = opposite nextTurn
+gomokuJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi | winNextTurn = Just Lose
+                | winTurn = Just Win
+                | otherwise = Nothing
+        where nextTurn = turn shogi
+              currentTurn = opposite nextTurn
               winNextTurn = any (fiveStreak. map (isColor nextTurn)) sliceAll
-              winTurn = any (fiveStreak. map (isColor turn)) sliceAll
+              winTurn = any (fiveStreak. map (isColor currentTurn)) sliceAll
               sliceAll :: [[(Coord, Cell)]]
               sliceAll = do
                  x <- [1..9]
                  y <- [1..9]
                  vec <- eightDirections
-                 return$ sliceFinite board (Coord x y) vec
+                 return$ sliceFinite (board shogi) (Coord x y) vec
               isColor :: Color -> (Coord, Cell) -> Bool
               isColor color (_, Just (Piece color' _ _)) | color==color' = True
               isColor _ _ = False
@@ -128,15 +141,20 @@ fiveStreak = f 0
           f n (True:xs) = f (n+1) xs
           f n (False:xs) = f 0 xs
 
-data WinHandCountJudge
-instance Judge WinHandCountJudge where
-    judge (Shogi _ nextTurn _ hands)
+winHandCountJudge = Judge {
+    runJudge = judge
+} where
+    judge shogi
         | win nextTurn = Just Lose
-        | win turn = Just Win
+        | win currentTurn = Just Win
         | otherwise = Nothing
-        where turn = opposite nextTurn
+        where nextTurn = turn shogi
+              currentTurn = opposite nextTurn
               count hand = foldl' (+) 0$ map snd hand
-              win t = count (toList t hands) >= 3
+              win t = count (toList t$ hands shogi) >= 3
 
 -- TODO: It's meaningless unless this is combined with other rules
-data LoseHandCountJudge
+loseHandCountJudge = Judge {
+    runJudge = judge
+} where
+    judge = undefined

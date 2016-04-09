@@ -1,13 +1,7 @@
-{-# LANGUAGE GADTs #-}
 module Board where
 
 import Piece(Piece(..), Kind(..), Coord, Color(..), Promoted, moveDefs, MoveDef(..), uniqueMoveDef)
 import Coord(Coord(..), getY, direct)
-import Board.AbilityProxy(NormalAbilityProxy)
-import Board.Slicer(NormalSlicer)
-import Board.Mover(NormalMover)
-import Board.Effector(NormalEffector)
-import Board.MoverPredicator(NormalMoverPredicator)
 import Data.Vector as V(Vector, fromList, toList, (!), (//))
 import Data.List(transpose, nub)
 import Data.Ix as Ix(inRange)
@@ -18,12 +12,19 @@ import Control.Monad(guard)
 type Cell = Maybe Piece
 data Move = Move Coord Coord Promoted | Put Coord Kind deriving (Show, Eq)
 
-data Board m e a s mp where
-    Board :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) =>
-        (Int, Int) -> Vector Cell -> Board m e a s mp
-instance Eq (Board m e a s mp) where
-    Board size vec == Board size2 vec2 = size == size2 && toList vec == toList vec2
-instance Show (Board m e a s mp) where
+data Board = Board {
+    getMover :: Mover,
+    getEffector :: Effector,
+    getAbilityProxy :: AbilityProxy,
+    getSlicer :: Slicer,
+    getMoverPredicator :: MoverPredicator,
+
+    size :: (Int, Int),
+    vector :: Vector Cell
+}
+instance Eq Board where
+    b1 == b2 = size b1 == size b2 && vector b1 == vector b2
+instance Show Board where
     show board = concat$ do
         y <- [1..9]
         return. (\line->"P"++show y++line++"\n"). concat$ do
@@ -32,43 +33,58 @@ instance Show (Board m e a s mp) where
         where showCell Nothing = " * "
               showCell (Just p) = show p
 
-type NormalBoard = Board NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator
 
-class AbilityProxy a where
-    abilityProxy :: Color -> Coord -> Board m e a s mp -> [(Promoted, Kind)]
+data Mover = Mover {
+    runMover :: Color -> Move -> Board -> (Board, [Kind])
+}
+move :: Color -> Move -> Board -> (Board, [Kind])
+move color move board = runMover (getMover board) color move board
 
-class Slicer s where
-    sliceAsCoord :: Board m e a s mp -> Coord -> Coord -> [Coord]
-    slice :: Board m e a s mp -> Coord -> Coord -> [(Coord, Cell)]
-    slice board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoord board base vec
-    sliceFinite :: Board m e a s mp -> Coord -> Coord -> [(Coord, Cell)]
-    sliceFinite board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoordFinite board base vec
-    sliceAsCoordFinite :: Board m e a s mp -> Coord -> Coord -> [Coord]
-    sliceAsCoordFinite board base vec = if regularity board || null slices
-        then slices
-        else f slices
-        where slices = sliceAsCoord board base vec
-              first = head slices
-              f [x] = [x]
-              f (x:y:xs) | base==x && first == y = [x]
-              f (_:y:xs) = f (y:xs)
-    regularity :: Board m e a s mp -> Bool
+data Effector = Effector {
+    runEffector :: Coord -> Coord -> Board -> Board,
+    runEffectorPut :: Coord -> Board -> Board
+}
+effect :: Coord -> Coord -> Board -> Board
+effect from to board = runEffector (getEffector board) from to board
+effectPut :: Coord -> Board -> Board
+effectPut to board = runEffectorPut (getEffector board) to board
 
-class Mover m where
-    move :: Color -> Move -> Board m e a s mp -> (Board m e a s mp, [Kind])
+data AbilityProxy = AbilityProxy {
+    runAbilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
+}
+abilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
+abilityProxy color from board = runAbilityProxy (getAbilityProxy board) color from board
 
-class Effector e where
-    effect :: Coord -> Coord -> Board m e a s mp -> Board m e a s mp
-    effectPut :: Coord -> Board m e a s mp -> Board m e a s mp
-    effectPut = effect (error "Define `effectPut` for Effector if `effect` uses `from` parameter")
+data Slicer = Slicer {
+    runSliceAsCoord :: Board -> Coord -> Coord -> [Coord],
+    runRegularity :: Bool
+}
+sliceAsCoord :: Board -> Coord -> Coord -> [Coord]
+sliceAsCoord board base vec = runSliceAsCoord (getSlicer board) board base vec
+regularity :: Board -> Bool
+regularity = runRegularity. getSlicer
 
-class MoverPredicator mp where
-    canMove :: Board m e a s mp -> (Coord, Piece) -> Bool
-    canMoveCoord :: Board m e a s mp -> Coord -> Bool
-    canMoveCoord board coord = canMove board (coord, unsafeGet board coord)
+slice :: Board -> Coord -> Coord -> [(Coord, Cell)]
+slice board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoord board base vec
+sliceFinite :: Board -> Coord -> Coord -> [(Coord, Cell)]
+sliceFinite board base vec = map (\coord -> (coord, get board coord))$ sliceAsCoordFinite board base vec
+sliceAsCoordFinite :: Board -> Coord -> Coord -> [Coord]
+sliceAsCoordFinite board base vec = if regularity board || null slices
+    then slices
+    else f slices
+    where slices = sliceAsCoord board base vec
+          first = head slices
+          f [x] = [x]
+          f (x:y:xs) | base==x && first == y = [x]
+          f (_:y:xs) = f (y:xs)
 
-initialBoard :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp) => Board m e a s mp
-initialBoard = Board (9,9) initialArray
+data MoverPredicator = MoverPredicator {
+    runMoverPredicator :: Board -> (Coord, Piece) -> Bool
+}
+canMove :: Board -> (Coord, Piece) -> Bool
+canMove board pair = runMoverPredicator (getMoverPredicator board) board pair
+canMoveCoord :: Board -> Coord -> Bool
+canMoveCoord board coord = canMove board (coord, unsafeGet board coord)
 
 initialArray :: Vector Cell
 initialArray = fromList. concat. transpose$ gote++replicate 3 four++sente
@@ -81,36 +97,40 @@ initialArray = fromList. concat. transpose$ gote++replicate 3 four++sente
           sente :: [[Cell]]
           sente = reverse$ map (reverse . map (fmap (\(Piece _ _ kind)->Piece Black False kind))) gote
 
-unsafeGet :: Board m e a s mp -> Coord -> Piece
+unsafeGet :: Board -> Coord -> Piece
 unsafeGet b c = let Just p = get b c in p
 
-get :: Board m e a s mp -> Coord -> Cell
-get b@(Board _ v) c = v!coordToInt b c
+get :: Board -> Coord -> Cell
+get b c = vector b!coordToInt b c
 
-safeGet :: Board m e a s mp -> Coord -> Cell
+safeGet :: Board -> Coord -> Cell
 safeGet b c = if b `Board.inRange` c then get b c else Nothing
 
-set :: Board m e a s mp -> (Coord, Cell) -> Board m e a s mp
+set :: Board -> (Coord, Cell) -> Board
 set b cp = sets b [cp]
 
-sets :: Board m e a s mp -> [(Coord, Cell)] -> Board m e a s mp
-sets b@(Board size v) cps = Board size$ v // map (first (coordToInt b)) cps
+sets :: Board -> [(Coord, Cell)] -> Board
+sets b cps = b {
+    vector = vector b // map (first (coordToInt b)) cps
+}
 
-inRange :: Board m e a s mp -> Coord -> Bool
+inRange :: Board -> Coord -> Bool
 inRange board = Ix.inRange$ bounds board
 
-bounds :: Board m e a s mp -> (Coord, Coord)
-bounds (Board size _) = (Coord 1 1, uncurry Coord size)
+bounds :: Board -> (Coord, Coord)
+bounds b = (Coord 1 1, uncurry Coord (size b))
 
-cells :: Board m e a s mp -> [(Coord, Cell)]
-cells b@(Board _ vec) = zip (map (intToCoord b) [0..])$ toList vec
+cells :: Board -> [(Coord, Cell)]
+cells b = zip (map (intToCoord b) [0..])$ toList$ vector b
 
-coordToInt :: Board m e a s mp -> Coord -> Int
-coordToInt (Board (xMax, _) _) (Coord x y) = xMax*(x-1)+y-1
-intToCoord :: Board m e a s mp -> Int -> Coord
-intToCoord (Board (xMax, _) _) n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
+coordToInt :: Board -> Coord -> Int
+coordToInt board (Coord x y) = xMax*(x-1)+y-1
+    where (xMax, _) = size board
+intToCoord :: Board -> Int -> Coord
+intToCoord board n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
+    where (xMax, _) = size board
 
-getMoves :: Color -> Board m e a s mp -> [Kind] -> [Move]
+getMoves :: Color -> Board -> [Kind] -> [Move]
 getMoves turn board kinds = do
     (from, cell) <- cells board
     case cell of
@@ -118,29 +138,30 @@ getMoves turn board kinds = do
         Just (Piece color _ _) | turn == color -> getMovesFrom board from
         _ -> []
 
-getMovesEach :: Board m e a s mp -> ([Kind], [Kind]) -> ([Move], [Move])
+getMovesEach :: Board -> ([Kind], [Kind]) -> ([Move], [Move])
 getMovesEach board (kindsB, kindsW) = foldr f ([], [])$ cells board
+    -- TODO: bug
     where f (from, Nothing) (bs, ws) = (map (Put from) kindsB++bs, map (Put from) kindsB++ws)
           f (from, Just (Piece Black _ _)) (bs, ws) = (getMovesFrom board from++bs, ws)
           f (from, Just (Piece White _ _)) (bs, ws) = (bs, getMovesFrom board from++ws)
 
-getMovesFrom :: Board m e a s mp -> Coord -> [Move]
+getMovesFrom :: Board -> Coord -> [Move]
 getMovesFrom board from = getMovesFrom' board from$ unsafeGet board from
 
-getMovesFrom' :: Board m e a s mp -> Coord -> Piece -> [Move]
-getMovesFrom' board@Board{} from p@(Piece color _ _) = do
+getMovesFrom' :: Board -> Coord -> Piece -> [Move]
+getMovesFrom' board from p@(Piece color _ _) = do
     guard$ canMove board (from, p)
     dest <- destinationsAt board from
     if canPromote color board from || canPromote color board dest
         then map (Move from dest) [True,False]
         else return$ Move from dest False
 
-destinationsAt :: Board m e a s mp -> Coord -> [Coord]
-destinationsAt board@(Board _ _) from | regularity board = destinationsAt' board from
-                                      | otherwise = nub$ destinationsAt' board from
+destinationsAt :: Board -> Coord -> [Coord]
+destinationsAt board from | regularity board = destinationsAt' board from
+                          | otherwise = nub$ destinationsAt' board from
 
-destinationsAt' :: Board m e a s mp -> Coord -> [Coord]
-destinationsAt' board@(Board _ _) from = do
+destinationsAt' :: Board -> Coord -> [Coord]
+destinationsAt' board from = do
     moveDef <- case abilities of
         [(promoted, ability)] -> moveDefs ability promoted
         _ -> uniqueMoveDef$ concat [moveDefs ability promoted|(promoted, ability)<-abilities]
@@ -157,7 +178,7 @@ destinationsAt' board@(Board _ _) from = do
                                                   | otherwise = [to]
           takeW ((to,_):xs) = to:takeW xs
 
-isLegalMove :: Board m e a s mp -> Move -> Bool
+isLegalMove :: Board -> Move -> Bool
 isLegalMove board move@(Move from _ _) = board `Board.inRange` from && move `elem` getMovesFrom board from
 isLegalMove board (Put to _) = board `Board.inRange` to && isNothing (get board to)
 
@@ -165,10 +186,10 @@ addCoord :: Color -> Coord -> Coord -> Coord
 addCoord Black x v = x+v
 addCoord White x v = x-v
 
-canPromote :: Color -> Board m e a s mp -> Coord -> Bool
+canPromote :: Color -> Board -> Coord -> Bool
 canPromote Black _ c = getY c<=3
 canPromote _ board coord = canPromote Black board$ reverseCoord board coord
 
-reverseCoord :: Board m e a s mp -> Coord -> Coord
+reverseCoord :: Board -> Coord -> Coord
 reverseCoord board c = max+min-c
     where (min, max) = bounds board

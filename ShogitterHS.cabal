@@ -19,8 +19,10 @@ library
                       , Coord
                       , Coord.Const
                       , Board
+                      , Board.Const
                       , Piece
                       , Shogi
+                      , Shogi.Const
                       , Hands
                       , Board.AbilityProxy
                       , Board.Slicer

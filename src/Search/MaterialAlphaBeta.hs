@@ -1,6 +1,6 @@
 module Search.MaterialAlphaBeta(alphaBeta, iterativeDeepeningAlphaBeta, cachify, children, node_value) where
 
-import Shogi(getNext, Shogi(..), Result(..), Judge(..), History(..), Diff(..), DetailedMove(..))
+import Shogi(getNext, Shogi(..), Result(..), History(..), Diff(..), DetailedMove(..), judge)
 import Board --(cells)
 import Hands(toList)
 import Piece(Kind(..), Piece(..), Promoted)
@@ -8,12 +8,10 @@ import Color(Color(..))
 import Data.Tree.Game_tree.Game_tree(Game_tree(..))
 import Data.Tree.Game_tree.Negascout(negascout)
 
-import Debug.Trace(trace)
-
 alphaBeta :: Game_tree g => g -> Int -> ([g], Int)
 alphaBeta = negascout
 
-instance Judge j => Game_tree (Shogi m e a s mp j) where
+instance Game_tree Shogi where
     is_terminal shogi = case judge shogi of
         Just Win -> True
         _ -> False
@@ -24,16 +22,16 @@ instance Judge j => Game_tree (Shogi m e a s mp j) where
         where notLose s | Just Lose <- judge s = False
               notLose _ = True
 
-data CachedShogi m e a s mp j = CachedShogi Int (Shogi m e a s mp j) deriving Show
+data CachedShogi = CachedShogi Int Shogi deriving Show
 
-instance (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j)
-    => Game_tree (CachedShogi m e a s mp j) where
+instance Game_tree CachedShogi where
     is_terminal (CachedShogi _ shogi) = is_terminal shogi
     node_value (CachedShogi eval _) = eval
     children (CachedShogi eval shogi) = map cachify'$ children shogi
-        where cachify' shogi@(Shogi (History []) _ _ _) = cachify shogi
-              cachify' shogi@(Shogi (History (diff:_)) _ _ _) = CachedShogi newEval shogi
-                where newEval = if is_terminal shogi then -evalInfinity else evaluateDiff eval diff
+        where cachify' shogi | History [] <- history shogi = cachify shogi
+              cachify' shogi = CachedShogi newEval shogi
+              History (diff:_) = history shogi
+              newEval = if is_terminal shogi then -evalInfinity else evaluateDiff eval diff
 
 evaluateDiff lastEval (Diff (DMove color from to kind promoted captured)) = -valPromote-valCapture-lastEval
     where valPromote = if promoted then value kind True - value kind False else 0
@@ -42,8 +40,7 @@ evaluateDiff lastEval (Diff (DMove color from to kind promoted captured)) = -val
             Nothing -> 0
 evaluateDiff lastEval _ = -lastEval
 
-cachify :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j)
-    => Shogi m e a s mp j -> CachedShogi m e a s mp j
+cachify :: Shogi -> CachedShogi
 cachify shogi = CachedShogi (evaluate shogi) shogi
 
 iterativeDeepeningAlphaBeta :: Game_tree g => g -> [([g], Int)]
@@ -52,14 +49,14 @@ iterativeDeepeningAlphaBeta s = map (negascout s) [1..]
 evalInfinity :: Int
 evalInfinity = maxBound-4
 
-evaluate :: Judge j => Shogi m e a s mp j -> Int
-evaluate shogi@(Shogi _ turn board hands) = if is_terminal shogi
+evaluate :: Shogi -> Int
+evaluate shogi = if is_terminal shogi
     then -evalInfinity -- lose
-    else (if turn==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
+    else (if turn shogi==Black then 1 else -1) * (handValue Black - handValue White + boardValue)
     where handValue :: Color -> Int
-          handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color hands
+          handValue color = sum$ map (\(kind, num)->value kind False*num)$ toList color$ hands shogi
           boardValue = sum$ do
-              (_, piece) <- cells board
+              (_, piece) <- cells$ board shogi
               case piece of
                   Just (Piece Black promoted kind) -> return$ value kind promoted
                   Just (Piece White promoted kind) -> return$ -value kind promoted

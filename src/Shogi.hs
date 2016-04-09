@@ -1,14 +1,6 @@
-{-# LANGUAGE GADTs #-}
 module Shogi where
 
-import Board(Board, Mover, move, Effector, AbilityProxy, Slicer, MoverPredicator, Move(..), initialBoard, getMoves,
-    isLegalMove, unsafeGet, get)
-import Board.AbilityProxy(NormalAbilityProxy)
-import Board.Slicer(NormalSlicer)
-import Board.Mover(NormalMover)
-import Board.Effector(NormalEffector)
-import Board.MoverPredicator(NormalMoverPredicator)
-import Shogi.Judge(NormalJudge)
+import Board(Board, move, Move(..), getMoves, isLegalMove, unsafeGet, get)
 import Piece
 import Hands
 import Color
@@ -38,60 +30,73 @@ instance Show DetailedMove where
         where showCoord (Coord x y) = show x++show y
               showPromoted True = "*"
               showPromoted False = ""
+-- TODO: add DPut
 
 initialHistory :: History
 initialHistory = History []
 
-addHistory :: Shogi m e a s mp j -> Move -> History -> History
-addHistory (Shogi _ turn board _) (Move from to promoted) (History diffs) = History$ Diff dMove: diffs
-    where dMove = DMove turn from to (getKind$ unsafeGet board from) promoted (getPair <$> get board to)
+addHistory :: Shogi -> Move -> History -> History
+addHistory shogi (Move from to promoted) (History diffs) = History$ Diff dMove: diffs
+    where b = board shogi
+          dMove = DMove (turn shogi) from to (getKind$ unsafeGet b from) promoted (getPair <$> get b to)
           getKind (Piece _ _ kind) = kind
           getPair (Piece _ promoted kind) = (kind, promoted)
-addHistory (Shogi _ turn board _) (Put to kind) (History diffs) = History$ Diff dPut: diffs
-    where dPut = DPut turn to kind
+addHistory shogi (Put to kind) (History diffs) = History$ Diff dPut: diffs
+    where dPut = DPut (turn shogi) to kind
 
-data Shogi m e a s mp j where
-    Shogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j)
-        => History -> Turn -> Board m e a s mp -> Hands -> Shogi m e a s mp j
-instance Eq (Shogi m e a s mp j) where
-    Shogi _ t b h == Shogi _ t' b' h' = t==t' && b==b' && h==h'
-instance Show (Shogi m e a s mp j) where
-    show (Shogi history turn board hands) = show board ++ show hands ++ show turn ++ show history ++ "\n"
+data Shogi = Shogi {
+    getJudge :: Judge,
 
-class Judge j where
-    judge :: Shogi m e a s mp j -> Maybe Result
+    history :: History,
+    turn :: Turn,
+    board :: Board,
+    hands :: Hands
+}
+instance Eq Shogi where
+    s == s' = turn s == turn s' && board s == board s' && hands s == hands s'
+instance Show Shogi where
+    show s = show (board s) ++ show (hands s) ++ show (turn s) ++ show (history s) ++ "\n"
 
-type NormalShogi = Shogi NormalMover NormalEffector NormalAbilityProxy NormalSlicer NormalMoverPredicator NormalJudge
+data Judge = Judge {
+    runJudge :: Shogi -> Maybe Result
+}
+judge :: Shogi -> Maybe Result
+judge shogi = runJudge (getJudge shogi) shogi
 
-initialShogi :: (Mover m, Effector e, AbilityProxy a, Slicer s, MoverPredicator mp, Judge j) => Shogi m e a s mp j
-initialShogi = Shogi initialHistory Black initialBoard initialHands
+getMovesShogi :: Shogi -> [Move]
+getMovesShogi shogi = getMoves currentTurn (board shogi)$ kindsHand currentTurn$ hands shogi
+    where currentTurn = turn shogi
 
-getMovesShogi :: Shogi m e a s mp j -> [Move]
-getMovesShogi (Shogi _ turn board hands) = getMoves turn board$ kindsHand turn hands
-
-getNext :: Shogi m e a s mp j -> [Shogi m e a s mp j]
+getNext :: Shogi -> [Shogi]
 getNext shogi = [unsafeDoMove move shogi | move <- getMovesShogi shogi]
 
-getNextWithoutJudge :: Shogi m e a s mp j -> [Shogi m e a s mp j]
+getNextWithoutJudge :: Shogi -> [Shogi]
 getNextWithoutJudge = getNext -- TODO: exclude judge
 
-unsafeDoMove :: Move -> Shogi m e a s mp j -> Shogi m e a s mp j
-unsafeDoMove mv@Move{} shogi@(Shogi history turn board hands) = Shogi history' turn' board' hands'
-    where turn' = opposite turn
-          (board', kinds) = move turn mv board
-          hands' = foldr (addToHands turn) hands kinds
-          history' = addHistory shogi mv history
-unsafeDoMove mv@(Put _ kind) shogi@(Shogi history turn board hands) = Shogi history' turn' board' hands'
-    where turn' = opposite turn
-          (board', kinds) = move turn mv board
-          Just hands' = removeFromHands turn kind$ foldr (addToHands turn) hands kinds
-          history' = addHistory shogi mv history
+unsafeDoMove :: Move -> Shogi -> Shogi
+unsafeDoMove mv@Move{} shogi = shogi {
+    history = addHistory shogi mv$ history shogi,
+    turn = opposite currentTurn,
+    board = board',
+    hands = foldr (addToHands currentTurn) (hands shogi) kinds
+} where
+    currentTurn = turn shogi
+    (board', kinds) = move currentTurn mv$ board shogi
+unsafeDoMove mv@(Put _ kind) shogi = shogi {
+    history = addHistory shogi mv$ history shogi,
+    turn = opposite currentTurn,
+    board = board',
+    hands = hands'
+} where
+    currentTurn = turn shogi
+    (board', kinds) = move currentTurn mv$ board shogi
+    Just hands' = removeFromHands currentTurn kind$ foldr (addToHands currentTurn) (hands shogi) kinds
 
-doMove :: Move -> Shogi m e a s mp j -> Maybe (Shogi m e a s mp j)
-doMove move@Move{} shogi@(Shogi _ _ board _) = do
-    guard$ isLegalMove board move
+doMove :: Move -> Shogi -> Maybe Shogi
+doMove move@Move{} shogi = do
+    guard$ isLegalMove (board shogi) move
     return$ unsafeDoMove move shogi
-doMove move@(Put _ kind) shogi@(Shogi _ turn board hands) = do
-    guard$ isLegalMove board move
-    _ <- removeFromHands turn kind hands
+doMove move@(Put _ kind) shogi = do
+    guard$ isLegalMove (board shogi) move
+    _ <- removeFromHands (turn shogi) kind (hands shogi)
     return$ unsafeDoMove move shogi

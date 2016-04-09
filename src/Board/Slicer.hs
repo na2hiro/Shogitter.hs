@@ -1,26 +1,28 @@
 module Board.Slicer
-    ( NormalSlicer
-    , LoopSlicer
-    , DonutSlicer
-    , ReflectSlicer
+    ( normalSlicer
+    , loopSlicer
+    , donutSlicer
+    , reflectSlicer
     ) where
 
-import {-# SOURCE #-}Board
+import Board
 import Coord
 
 data Range = Below | InRange | Above
 
-data NormalSlicer
-instance Slicer NormalSlicer where
-    regularity _ = True
+normalSlicer = Slicer {
+    runRegularity = True,
+    runSliceAsCoord = sliceAsCoord
+} where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where slice' now vec = if board `inRange` now
                 then now: slice' (now + vec) vec
                 else []
 
-data LoopSlicer
-instance Slicer LoopSlicer where
-    regularity _ = False
+loopSlicer = Slicer {
+    runRegularity = False,
+    runSliceAsCoord = sliceAsCoord
+} where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where bs = bounds board
               slice' now vec = case bs `inRangeY` now of
@@ -29,16 +31,18 @@ instance Slicer LoopSlicer where
                     _ -> let now' = modC bs now in now': slice' (now'+vec) vec
                 _ -> []
 
-data DonutSlicer
-instance Slicer DonutSlicer where
-    regularity _ = False
+donutSlicer = Slicer {
+    runRegularity = False,
+    runSliceAsCoord = sliceAsCoord
+} where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where bs = bounds board
               slice' now vec = let now' = modC bs now in now': slice' (now'+vec) vec
 
-data ReflectSlicer
-instance Slicer ReflectSlicer where
-    regularity _ = False
+reflectSlicer = Slicer {
+    runRegularity = False,
+    runSliceAsCoord = sliceAsCoord
+} where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where bs@(min, max) = bounds board
               slice' now vec = now': slice' (now'+vec') vec'
