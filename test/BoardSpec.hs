@@ -30,4 +30,13 @@ spec = do
         it "(8,2)"$ destinationsAt initial (Coord 8 2) `shouldMatchList`
             [Coord 9 2, Coord 7 2, Coord 6 2, Coord 5 2, Coord 4 2, Coord 3 2]
         it "(2,2)"$ destinationsAt initial (Coord 2 2) `shouldMatchList` []
-
+    describe "getMovesEach == getMoves"$
+        let initialEach = getMovesEach initial ([], [])
+            initialWithBEach = getMovesEach initial ([FU], [])
+            initialBothEach = getMovesEach initial ([KA], [HI]) in do
+        it "initial Black"$ getMoves Black initial [] `shouldMatchList` fst initialEach
+        it "initial White"$ getMoves White initial [] `shouldMatchList` snd initialEach
+        it "initial Black with Black FU"$ getMoves Black initial [FU] `shouldMatchList` fst initialWithBEach
+        it "initial White with Black FU"$ getMoves White initial [] `shouldMatchList` snd initialWithBEach
+        it "initial Black Both"$ getMoves Black initial [KA] `shouldMatchList` fst initialBothEach
+        it "initial White Both"$ getMoves White initial [HI] `shouldMatchList` snd initialBothEach

@@ -67,10 +67,9 @@ mateJudge = Judge {
 mate :: Shogi -> (Bool, Bool)
 mate shogi = (coordBlack `elem` tosWhite, coordWhite `elem` tosBlack)
         where b = board shogi
-              hs = hands shogi -- TODO: bug
-              (tosBlack, tosWhite) = getTo *** getTo$ getMovesEach b ([], [])
+              (tosBlack, tosWhite) = getTo *** getTo$ getMovesEach b ([], []) -- No Put can pick OU
               getTo = map (\(Move _ to _)->to)
-              (Just (coordBlack, _), Just (coordWhite, _)) = getOu$ board shogi
+              (Just (coordBlack, _), Just (coordWhite, _)) = getOu b
 
 -- Note: No support for multiple OU
 checkMateJudge = Judge {
@@ -78,7 +77,7 @@ checkMateJudge = Judge {
 } where
     judge shogi
         | mateTurn = Just Lose
-        | mateNextTurn && all (pickTuple nextTurn. mate) (getNextWithoutJudge shogi) = Just Win
+        | mateNextTurn && all (pickTuple nextTurn. mate) (getNext shogi) = Just Win
         | otherwise = Nothing
         where nextTurn = turn shogi
               currentTurn = opposite nextTurn

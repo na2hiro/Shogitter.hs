@@ -140,8 +140,7 @@ getMoves turn board kinds = do
 
 getMovesEach :: Board -> ([Kind], [Kind]) -> ([Move], [Move])
 getMovesEach board (kindsB, kindsW) = foldr f ([], [])$ cells board
-    -- TODO: bug
-    where f (from, Nothing) (bs, ws) = (map (Put from) kindsB++bs, map (Put from) kindsB++ws)
+    where f (from, Nothing) (bs, ws) = (map (Put from) kindsB++bs, map (Put from) kindsW++ws)
           f (from, Just (Piece Black _ _)) (bs, ws) = (getMovesFrom board from++bs, ws)
           f (from, Just (Piece White _ _)) (bs, ws) = (bs, getMovesFrom board from++ws)
 

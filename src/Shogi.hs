@@ -30,7 +30,8 @@ instance Show DetailedMove where
         where showCoord (Coord x y) = show x++show y
               showPromoted True = "*"
               showPromoted False = ""
--- TODO: add DPut
+    show (DPut color to kind) = showCoord to ++ show kind
+        where showCoord (Coord x y) = show x++show y
 
 initialHistory :: History
 initialHistory = History []
@@ -69,9 +70,6 @@ getMovesShogi shogi = getMoves currentTurn (board shogi)$ kindsHand currentTurn$
 
 getNext :: Shogi -> [Shogi]
 getNext shogi = [unsafeDoMove move shogi | move <- getMovesShogi shogi]
-
-getNextWithoutJudge :: Shogi -> [Shogi]
-getNextWithoutJudge = getNext -- TODO: exclude judge
 
 unsafeDoMove :: Move -> Shogi -> Shogi
 unsafeDoMove mv@Move{} shogi = shogi {
