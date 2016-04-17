@@ -28,10 +28,10 @@ instance Game_tree CachedShogi where
     is_terminal (CachedShogi _ shogi) = is_terminal shogi
     node_value (CachedShogi eval _) = eval
     children (CachedShogi eval shogi) = map cachify'$ children shogi
-        where cachify' shogi | History [] <- history shogi = cachify shogi
-              cachify' shogi = CachedShogi newEval shogi
-              History (diff:_) = history shogi
-              newEval = if is_terminal shogi then -evalInfinity else evaluateDiff eval diff
+        where cachify' shogi = case history shogi of
+                History [] -> cachify shogi
+                History (diff:_) -> CachedShogi newEval shogi
+                  where newEval = if is_terminal shogi then -evalInfinity else evaluateDiff eval diff
 
 evaluateDiff lastEval (Diff (DMove color from to kind promoted captured)) = -valPromote-valCapture-lastEval
     where valPromote = if promoted then value kind True - value kind False else 0
