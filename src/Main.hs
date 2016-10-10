@@ -8,6 +8,7 @@ import Piece(Kind(FU))
 import System.Environment(getArgs)
 import Search.MaterialAlphaBeta
 import Data.Tree.Game_tree.Game_tree(Game_tree(..))
+import Server.Server
 
 main :: IO ()
 main = do

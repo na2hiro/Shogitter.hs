@@ -1,4 +1,4 @@
-module Hands(Hands, kindsHand, addToHands, removeFromHands, initialHands, Hands.toList) where
+module Hands(Hands(..), kindsHand, addToHands, removeFromHands, initialHands, Hands.toList) where
 
 import Piece(Color(..), Kind)
 import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey, keys, toList)

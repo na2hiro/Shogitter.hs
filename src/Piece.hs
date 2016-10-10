@@ -1,4 +1,4 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, promoteReverse, uniqueMoveDef) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, promoteReverse, uniqueMoveDef, fromJKFKindColor) where
 
 import Color(Color(..))
 import Coord
@@ -16,7 +16,7 @@ getCoord :: MoveDef -> Coord
 getCoord (Exact c) = c
 getCoord (Slide c) = c
 
-data Kind = FU | KY | KE | GI | KI | KA | HI | OU deriving (Show, Ord, Eq, Enum)
+data Kind = FU | KY | KE | GI | KI | KA | HI | OU deriving (Show, Read, Ord, Eq, Enum)
 
 kin :: [MoveDef]
 kin = map Exact [forwardRight, forward, forwardLeft, right, left, backward]
@@ -50,6 +50,20 @@ showKind True KE = "NK"
 showKind True GI = "NG"
 showKind True KA = "UM"
 showKind True HI = "RY"
+
+-- We identify pieces by (Kind, Promote), though JKF identify by kind including promoted kind
+fromJKFKindColor :: String -> Color -> Piece
+fromJKFKindColor k c = Piece c promoted kind
+    where (promoted, kind) = fromJKFKind k
+
+fromJKFKind :: String -> (Promoted, Kind)
+fromJKFKind "TO" = (True, FU)
+fromJKFKind "NY" = (True, KY)
+fromJKFKind "NK" = (True, KE)
+fromJKFKind "NG" = (True, GI)
+fromJKFKind "UM" = (True, KA)
+fromJKFKind "RY" = (True, HI)
+fromJKFKind k = (False, read k)
 
 canPromote :: Kind -> Bool
 canPromote OU = False
