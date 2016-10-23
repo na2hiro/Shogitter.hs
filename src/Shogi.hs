@@ -59,6 +59,7 @@ instance Show Shogi where
     show s = show (board s) ++ show (hands s) ++ show (turn s) ++ show (history s) ++ "\n"
 
 data Judge = Judge {
+    judgeId :: String,
     runJudge :: Shogi -> Maybe Result
 }
 judge :: Shogi -> Maybe Result

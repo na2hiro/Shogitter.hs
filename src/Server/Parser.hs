@@ -18,17 +18,16 @@ import Board.Const(initialBoard)
 import Hands(Hands(..))
 import Piece(Kind, fromJKFKindColor)
 import Coord(Coord(..))
+import Rule(RuleConfig(..), defaultRuleConfig, fromMap)
 
 data Request = Request {
-    rule :: Rule,
+    rule :: RuleConfig,
     shogi :: Shogi,
     move :: Move
 } deriving (Show, Generic, FromJSON)
 
 data Response = Response Board (Either S.Result [Move])
               | ErrorResponse String deriving (Generic, ToJSON)
-
-data Rule = Rule deriving (Show) -- TODO
 
 parse :: ByteString -> Maybe Request
 parse = decode
@@ -105,7 +104,10 @@ instance FromJSON Coord where
 
 instance ToJSON S.Result where
     toJSON = fail "toJSON Result"
-instance FromJSON Rule where
-    parseJSON = withScientific "Rule"$ \num -> return Rule
-instance ToJSON Rule where
+
+instance FromJSON RuleConfig where
+    parseJSON text = do
+        hm <- parseJSON text
+        return$ fromMap hm
+instance ToJSON RuleConfig where
     toJSON _ = "\"TODO: rule\""

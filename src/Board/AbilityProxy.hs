@@ -11,6 +11,7 @@ module Board.AbilityProxy
     , yokoNekonekosenAbilityProxy
     , taimenAbilityProxy
     , haimenAbilityProxy
+    , abilityProxies
     ) where
 
 import Coord(Coord(..), getX, getY)
@@ -20,12 +21,30 @@ import Piece(Piece(..), Kind, Promoted)
 import Board
 import Data.Maybe(isJust, mapMaybe)
 
+abilityProxies :: [AbilityProxy]
+abilityProxies =
+    [ normalAbilityProxy
+    , annanAbilityProxy
+    , anhokuAbilityProxy
+    , antouzaiAbilityProxy
+    , ankiAbilityProxy
+    , tenjikuAbilityProxy
+    , nekosenAbilityProxy
+    , yokoNekosenAbilityProxy
+    , nekonekosenAbilityProxy
+    , yokoNekonekosenAbilityProxy
+    , taimenAbilityProxy
+    , haimenAbilityProxy
+    ]
+
 normalAbilityProxy = AbilityProxy {
+    abilityProxyId = "normal",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy _ = normalProxy
 
 annanAbilityProxy = AbilityProxy {
+    abilityProxyId = "annan",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = case safeGet b $addCoord color c backward of
@@ -33,6 +52,7 @@ annanAbilityProxy = AbilityProxy {
         _ -> return$ pieceToPromotedKind$ unsafeGet b c
 
 anhokuAbilityProxy = AbilityProxy {
+    abilityProxyId = "anhoku",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = case safeGet b$ addCoord color c forward of
@@ -40,6 +60,7 @@ anhokuAbilityProxy = AbilityProxy {
         _ -> return$ pieceToPromotedKind$ unsafeGet b c
 
 antouzaiAbilityProxy = AbilityProxy {
+    abilityProxyId = "antouzai",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = if null lr
@@ -52,6 +73,7 @@ isColor c (Piece c' _ _) | c==c' = True
 isColor _ _ = False
 
 ankiAbilityProxy = AbilityProxy {
+    abilityProxyId = "anki",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = if null p8
@@ -61,6 +83,7 @@ ankiAbilityProxy = AbilityProxy {
               p8 = filter (isColor color)$ mapMaybe (safeGet b. addCoord color c) happou
 
 tenjikuAbilityProxy = AbilityProxy {
+    abilityProxyId = "tenjiku",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = case safeGet b$ addCoord color c backward of
@@ -71,6 +94,7 @@ sliceWhile :: Coord -> Coord -> (Cell -> Bool) -> Board -> [Cell]
 sliceWhile base vec cond board = takeWhile cond$ map snd$ slice board base vec
 
 nekosenAbilityProxy = AbilityProxy {
+    abilityProxyId = "nekosen",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c) (getY c+backwards-forwards)]
@@ -80,6 +104,7 @@ nekosenAbilityProxy = AbilityProxy {
               cond _ = False
 
 yokoNekosenAbilityProxy = AbilityProxy {
+    abilityProxyId = "yokoNekosen",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c+lefts-rights) (getY c)]
@@ -89,6 +114,7 @@ yokoNekosenAbilityProxy = AbilityProxy {
               cond _ = False
 
 nekonekosenAbilityProxy = AbilityProxy {
+    abilityProxyId = "nekonekosen",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy _ c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c) (getY c+backwards-forwards)]
@@ -96,6 +122,7 @@ nekonekosenAbilityProxy = AbilityProxy {
               backwards = length$ sliceWhile c backward isJust b
 
 yokoNekonekosenAbilityProxy = AbilityProxy {
+    abilityProxyId = "yokoNekonekosen",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy _ c b = [pieceToPromotedKind$ unsafeGet b$ Coord (getX c+lefts-rights) (getY c)]
@@ -103,6 +130,7 @@ yokoNekonekosenAbilityProxy = AbilityProxy {
               lefts = length$ sliceWhile c left isJust b
 
 taimenAbilityProxy = AbilityProxy {
+    abilityProxyId = "taimen",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = case safeGet b$ addCoord color c forward of
@@ -110,6 +138,7 @@ taimenAbilityProxy = AbilityProxy {
         _ -> normalProxy c b
 
 haimenAbilityProxy = AbilityProxy {
+    abilityProxyId = "haimen",
     runAbilityProxy = abilityProxy
 } where
     abilityProxy color c b = case safeGet b$ addCoord color c backward of

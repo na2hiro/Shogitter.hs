@@ -8,8 +8,10 @@ module Shogi.Judge
     , othelloJudge
     , gomokuJudge
     , winHandCountJudge
+    , judges
     ) where
 
+import Prelude hiding(id)
 import Shogi
 import Board
 import Coord
@@ -21,12 +23,26 @@ import Data.List(foldl')
 import Control.Monad(foldM)
 import Control.Arrow((***))
 
+judges :: [Judge]
+judges =
+    [ normalJudge
+    , absentJudge
+    , mateJudge
+    , tryJudge
+    , checkMateJudge
+    , othelloJudge
+    , gomokuJudge
+    , winHandCountJudge
+    ]
+
 normalJudge = Judge {
+    judgeId = "normal",
     runJudge = judge
 } where
     judge _ = Nothing
 
 absentJudge = Judge {
+    judgeId = "absent",
     runJudge = judge
 } where
     judge shogi
@@ -52,6 +68,7 @@ pickTuple Black (a, _) = a
 pickTuple _ (_, a) = a
 
 mateJudge = Judge {
+    judgeId = "mate",
     runJudge = judge
 } where
     judge shogi
@@ -73,6 +90,7 @@ mate shogi = (coordBlack `elem` tosWhite, coordWhite `elem` tosBlack)
 
 -- Note: No support for multiple OU
 checkMateJudge = Judge {
+    judgeId = "checkMate",
     runJudge = judge
 } where
     judge shogi
@@ -85,6 +103,7 @@ checkMateJudge = Judge {
 
 -- TODO: Need to be combined with other rules. Error after OU is caught
 tryJudge = Judge {
+    judgeId = "try",
     runJudge = judge
 } where
     judge shogi
@@ -97,6 +116,7 @@ tryJudge = Judge {
               (tryTurn, tryNextTurn) = orderTuple currentTurn (coordBlack == Coord 5 1, coordWhite == Coord 5 9)
 
 othelloJudge = Judge {
+    judgeId = "othello",
     runJudge = judge
 } where
     judge shogi = compare. orderTuple currentTurn <$> countM (board shogi)
@@ -113,6 +133,7 @@ countM board = foldM f (0, 0)$ cells board
           f (b, w) _ = Just (b, w+1)
 
 gomokuJudge = Judge {
+    judgeId = "gomoku",
     runJudge = judge
 } where
     judge shogi | winNextTurn = Just Lose
@@ -141,6 +162,7 @@ fiveStreak = f 0
           f n (False:xs) = f 0 xs
 
 winHandCountJudge = Judge {
+    judgeId = "winHandCount",
     runJudge = judge
 } where
     judge shogi
@@ -154,6 +176,7 @@ winHandCountJudge = Judge {
 
 -- TODO: It's meaningless unless this is combined with other rules
 loseHandCountJudge = Judge {
+    judgeId = "loseHandCount",
     runJudge = judge
 } where
     judge = undefined

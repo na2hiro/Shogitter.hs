@@ -3,6 +3,7 @@ module Board.Slicer
     , loopSlicer
     , donutSlicer
     , reflectSlicer
+    , slicers
     ) where
 
 import Board
@@ -10,9 +11,18 @@ import Coord
 
 data Range = Below | InRange | Above
 
+slicers :: [Slicer]
+slicers =
+    [ normalSlicer
+    , loopSlicer
+    , donutSlicer
+    , reflectSlicer
+    ]
+
 normalSlicer = Slicer {
     runRegularity = True,
-    runSliceAsCoord = sliceAsCoord
+    runSliceAsCoord = sliceAsCoord,
+    slicerId = "normal"
 } where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where slice' now vec = if board `inRange` now
@@ -21,7 +31,8 @@ normalSlicer = Slicer {
 
 loopSlicer = Slicer {
     runRegularity = False,
-    runSliceAsCoord = sliceAsCoord
+    runSliceAsCoord = sliceAsCoord,
+    slicerId = "loop"
 } where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where bs = bounds board
@@ -33,7 +44,8 @@ loopSlicer = Slicer {
 
 donutSlicer = Slicer {
     runRegularity = False,
-    runSliceAsCoord = sliceAsCoord
+    runSliceAsCoord = sliceAsCoord,
+    slicerId = "donut"
 } where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where bs = bounds board
@@ -41,7 +53,8 @@ donutSlicer = Slicer {
 
 reflectSlicer = Slicer {
     runRegularity = False,
-    runSliceAsCoord = sliceAsCoord
+    runSliceAsCoord = sliceAsCoord,
+    slicerId = "reflect"
 } where
     sliceAsCoord board base vec = slice' (base+vec) vec
         where bs@(min, max) = bounds board

@@ -7,6 +7,7 @@ module Board.Effector
     , nuclearEffector
     , dondenEffector
     , gravityEffector
+    , effectors
     ) where
 
 import Board
@@ -17,18 +18,34 @@ import Coord
 import qualified Data.Set as S
 import Control.Monad(foldM)
 import Data.Maybe(isJust)
+import Data.List(find)
+
+effectors :: [Effector]
+effectors =
+    [ normalEffector
+    , othelloEffector
+    , goEffector
+    , nipEffector
+    , underWaterEffector
+    , nuclearEffector
+    , dondenEffector
+    , gravityEffector
+    ]
 
 defaultEffector = Effector {
+    effectorId = error "Define!",
     runEffector = error "Define!",
     runEffectorPut = effect (error "Define `effectPut` for Effector if `effect` uses `from` parameter")
 }
 
 normalEffector = defaultEffector {
+    effectorId = "normal",
     runEffector = effect
 } where
     effect _ _ = id
 
 othelloEffector = defaultEffector {
+    effectorId = "othello",
     runEffector = effect
 } where
     effect _ to board = sets board$ map (changeColor color)$ nipping8 board to
@@ -52,6 +69,7 @@ nipped color = nipped' []
           nipped' _ _ = []
 
 goEffector = defaultEffector {
+    effectorId = "go",
     runEffector = effect
 } where
     effect _ to board = sets board$ map empty$ surrounding byEnemy board to
@@ -90,11 +108,13 @@ bySpace board _ c | not (board `inRange` c) = NotSurrounded
                   | otherwise = Keep
 
 nipEffector = defaultEffector {
+    effectorId = "nip",
     runEffector = effect
 } where
     effect _ to board = sets board$ map empty$ map fst (nipping4 board to) ++ surrounding byEnemy board to
 
 underWaterEffector = defaultEffector {
+    effectorId = "underWater",
     runEffector = effect,
     runEffectorPut = effectPut
 } where
@@ -102,6 +122,7 @@ underWaterEffector = defaultEffector {
     effectPut _ = id
 
 nuclearEffector = defaultEffector {
+    effectorId = "nuclear",
     runEffector = effect
 } where
     effect _ to board = sets board diffs
@@ -110,6 +131,7 @@ nuclearEffector = defaultEffector {
               flipPiece (c, Just p) = (c, Just$ promoteReverse p)
 
 dondenEffector = defaultEffector {
+    effectorId = "donden",
     runEffector = effect
 } where
     effect _ to board = case safeGet board fwd of
@@ -120,6 +142,7 @@ dondenEffector = defaultEffector {
               fwd = addCoord color to forward
 
 gravityEffector = defaultEffector {
+    effectorId = "gravity",
     runEffector = effect
 } where
     effect _ _ board = sets board$ gravity board

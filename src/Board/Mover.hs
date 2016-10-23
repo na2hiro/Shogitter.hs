@@ -1,13 +1,20 @@
 module Board.Mover
     ( normalMover
+    , movers
     ) where
 
 import Board
 import Piece(Piece(..), promote)
 import Data.Maybe(maybeToList)
 
+movers :: [Mover]
+movers =
+       [ normalMover
+       ]
+
 normalMover = Mover {
-    runMover = move
+    runMover = move,
+    moverId = "normal"
 } where
     move _ (Move from to promoted) board = (effect from to board', kinds)
         where Just fromPiece = get board from

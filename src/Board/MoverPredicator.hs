@@ -2,18 +2,28 @@ module Board.MoverPredicator
     ( normalMoverPredicator
     , freezeMoverPredicator
     , madrasMoverPredicator
+    , moverPredicators
     ) where
 
 import Piece(Piece(..))
 import Board
 
+moverPredicators :: [MoverPredicator]
+moverPredicators =
+    [ normalMoverPredicator
+    , freezeMoverPredicator
+    , madrasMoverPredicator
+    ]
+
 normalMoverPredicator = MoverPredicator {
-    runMoverPredicator = canMove
+    runMoverPredicator = canMove,
+    moverPredicatorId = "normal"
 } where
     canMove _ _ = True
 
 freezeMoverPredicator = MoverPredicator {
-    runMoverPredicator = canMove
+    runMoverPredicator = canMove,
+    moverPredicatorId = "freeze"
 } where
     canMove board (coord, Piece turn _ _) = coord `notElem` enemiesDestinations
         where enemies = map fst$ filter (isEnemy. snd)$ cells board
@@ -22,7 +32,8 @@ freezeMoverPredicator = MoverPredicator {
               enemiesDestinations = concatMap (destinationsAt board) enemies
 
 madrasMoverPredicator = MoverPredicator {
-    runMoverPredicator = canMove
+    runMoverPredicator = canMove,
+    moverPredicatorId = "madras"
 } where
     canMove board (coord, Piece turn promoted kind) = coord `notElem` enemiesDestinations
         where enemies = map fst$ filter (isMadrasEnemy. snd)$ cells board

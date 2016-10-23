@@ -35,12 +35,14 @@ instance Show Board where
 
 
 data Mover = Mover {
+    moverId :: String,
     runMover :: Color -> Move -> Board -> (Board, [Kind])
 }
 move :: Color -> Move -> Board -> (Board, [Kind])
 move color move board = runMover (getMover board) color move board
 
 data Effector = Effector {
+    effectorId :: String,
     runEffector :: Coord -> Coord -> Board -> Board,
     runEffectorPut :: Coord -> Board -> Board
 }
@@ -50,12 +52,14 @@ effectPut :: Coord -> Board -> Board
 effectPut to board = runEffectorPut (getEffector board) to board
 
 data AbilityProxy = AbilityProxy {
+    abilityProxyId :: String,
     runAbilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
 }
 abilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
 abilityProxy color from board = runAbilityProxy (getAbilityProxy board) color from board
 
 data Slicer = Slicer {
+    slicerId :: String,
     runSliceAsCoord :: Board -> Coord -> Coord -> [Coord],
     runRegularity :: Bool
 }
@@ -79,6 +83,7 @@ sliceAsCoordFinite board base vec = if regularity board || null slices
           f (_:y:xs) = f (y:xs)
 
 data MoverPredicator = MoverPredicator {
+    moverPredicatorId :: String,
     runMoverPredicator :: Board -> (Coord, Piece) -> Bool
 }
 canMove :: Board -> (Coord, Piece) -> Bool
