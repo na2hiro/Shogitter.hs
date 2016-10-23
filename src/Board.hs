@@ -26,12 +26,13 @@ instance Eq Board where
     b1 == b2 = size b1 == size b2 && vector b1 == vector b2
 instance Show Board where
     show board = concat$ do
-        y <- [1..9]
+        y <- [1..ySize]
         return. (\line->"P"++show y++line++"\n"). concat$ do
-            x <- [9,8..1]
+            x <- [xSize,xSize-1..1]
             return. showCell$ get board$ Coord x y
         where showCell Nothing = " * "
               showCell (Just p) = show p
+              (xSize, ySize) = size board
 
 
 data Mover = Mover {
@@ -129,11 +130,11 @@ cells :: Board -> [(Coord, Cell)]
 cells b = zip (map (intToCoord b) [0..])$ toList$ vector b
 
 coordToInt :: Board -> Coord -> Int
-coordToInt board (Coord x y) = xMax*(x-1)+y-1
-    where (xMax, _) = size board
+coordToInt board (Coord x y) = yMax*(x-1)+y-1
+    where (_, yMax) = size board
 intToCoord :: Board -> Int -> Coord
-intToCoord board n = Coord ((n`div`xMax)+1)$ (n`rem`xMax)+1
-    where (xMax, _) = size board
+intToCoord board n = Coord ((n`div`yMax)+1)$ (n`rem`yMax)+1
+    where (_, yMax) = size board
 
 getMoves :: Color -> Board -> [Kind] -> [Move]
 getMoves turn board kinds = do

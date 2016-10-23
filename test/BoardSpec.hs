@@ -40,3 +40,61 @@ spec = do
         it "initial White with Black FU"$ getMoves White initial [] `shouldMatchList` snd initialWithBEach
         it "initial Black Both"$ getMoves Black initial [KA] `shouldMatchList` fst initialBothEach
         it "initial White Both"$ getMoves White initial [HI] `shouldMatchList` snd initialBothEach
+    -- TODO: Use QuickCheck
+    describe "coordToInt. intToCoord == id"$
+        let b = initialBoard{size=(2,3)} in do
+        it "initial Black"$ coordToInt initialBoard (intToCoord initialBoard 0) `shouldBe` 0
+        it "initial Black"$ coordToInt initialBoard (intToCoord initialBoard 1) `shouldBe` 1
+        it "initial Black"$ coordToInt initialBoard (intToCoord initialBoard 2) `shouldBe` 2
+        it "initial Black"$ coordToInt initialBoard (intToCoord initialBoard 80) `shouldBe` 80
+        it "initial Black"$ coordToInt b (intToCoord b 0) `shouldBe` 0
+        it "initial Black"$ coordToInt b (intToCoord b 1) `shouldBe` 1
+        it "initial Black"$ coordToInt b (intToCoord b 2) `shouldBe` 2
+        it "initial Black"$ coordToInt b (intToCoord b 3) `shouldBe` 3
+        it "initial Black"$ coordToInt b (intToCoord b 4) `shouldBe` 4
+        it "initial Black"$ coordToInt b (intToCoord b 5) `shouldBe` 5
+    describe "intToCoord. coordToInt == id"$
+        let b = initialBoard{size=(2,3)}
+            c11 = Coord 1 1
+            c12 = Coord 1 2
+            c13 = Coord 1 3 in do
+        it "initial Black"$ intToCoord initialBoard (coordToInt initialBoard c11) `shouldBe` c11
+        it "initial Black"$ intToCoord initialBoard (coordToInt initialBoard c12) `shouldBe` c12
+        it "initial Black"$ intToCoord initialBoard (coordToInt initialBoard c13) `shouldBe` c13
+        it "initial Black"$ intToCoord initialBoard (coordToInt initialBoard (Coord 9 9)) `shouldBe` Coord 9 9
+        it "initial Black"$ intToCoord b (coordToInt b c11) `shouldBe` c11
+        it "initial Black"$ intToCoord b (coordToInt b c12) `shouldBe` c12
+        it "initial Black"$ intToCoord b (coordToInt b c13) `shouldBe` c13
+        it "initial Black"$ intToCoord b (coordToInt b (Coord 2 1)) `shouldBe` Coord 2 1
+        it "initial Black"$ intToCoord b (coordToInt b (Coord 2 2)) `shouldBe` Coord 2 2
+        it "initial Black"$ intToCoord b (coordToInt b (Coord 2 3)) `shouldBe` Coord 2 3
+    describe "intToCoord"$
+        let b = initialBoard{size=(2,3)}
+            c11 = Coord 1 1
+            c12 = Coord 1 2
+            c13 = Coord 1 3 in do
+        it "initial Black"$ intToCoord initialBoard 0 `shouldBe` c11
+        it "initial Black"$ intToCoord initialBoard 1 `shouldBe` c12
+        it "initial Black"$ intToCoord initialBoard 2 `shouldBe` c13
+        it "initial Black"$ intToCoord initialBoard 80 `shouldBe` Coord 9 9
+        it "initial Black"$ intToCoord b 0 `shouldBe` c11
+        it "initial Black"$ intToCoord b 1 `shouldBe` c12
+        it "initial Black"$ intToCoord b 2 `shouldBe` c13
+        it "initial Black"$ intToCoord b 3 `shouldBe` Coord 2 1
+        it "initial Black"$ intToCoord b 4 `shouldBe` Coord 2 2
+        it "initial Black"$ intToCoord b 5 `shouldBe` Coord 2 3
+    describe "coordToInt"$
+        let b = initialBoard{size=(2,3)}
+            c11 = Coord 1 1
+            c12 = Coord 1 2
+            c13 = Coord 1 3 in do
+        it "initial Black"$ coordToInt initialBoard c11 `shouldBe` 0
+        it "initial Black"$ coordToInt initialBoard c12 `shouldBe` 1
+        it "initial Black"$ coordToInt initialBoard c13 `shouldBe` 2
+        it "initial Black"$ coordToInt initialBoard (Coord 9 9) `shouldBe` 80
+        it "initial Black"$ coordToInt b c11 `shouldBe` 0
+        it "initial Black"$ coordToInt b c12 `shouldBe` 1
+        it "initial Black"$ coordToInt b c13 `shouldBe` 2
+        it "initial Black"$ coordToInt b (Coord 2 1) `shouldBe` 3
+        it "initial Black"$ coordToInt b (Coord 2 2) `shouldBe` 4
+        it "initial Black"$ coordToInt b (Coord 2 3) `shouldBe` 5
