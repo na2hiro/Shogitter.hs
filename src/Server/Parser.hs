@@ -9,6 +9,8 @@ import Data.Aeson
 import GHC.Generics(Generic)
 import Data.ByteString.Lazy(ByteString)
 import Control.Arrow(first)
+import Data.Foldable(asum)
+import Control.Monad(liftM)
 
 import Shogi as S(Shogi(..), Result(..))
 import Shogi.Const(initialShogi)
@@ -27,7 +29,7 @@ data Request = Request {
 } deriving (Show, Generic, FromJSON)
 
 data Response = Response Board (Either S.Result [Move])
-              | ErrorResponse String deriving (Generic, ToJSON)
+              | ErrorResponse String deriving (Generic, ToJSON, Show)
 
 parse :: ByteString -> Maybe Request
 parse = decode
@@ -91,14 +93,9 @@ instance ToJSON Board where
     toJSON = fail "toJSON Board"
 
 instance FromJSON Move where
-    parseJSON = withObject "move"$ \o -> do
-        from <- o .:? "from"
-        to <- o .: "to"
-        piece <- o .: "piece"
-        promote <- o .:? "promote" .!= False
-        return$ case from of
-            Just f -> Move f to promote
-            Nothing -> Put to (read piece)
+    parseJSON = withObject "move"$ \o -> asum [
+        Move <$> o .: "from" <*> o .: "to" <*> o .:? "promote" .!= False,
+        Put <$> o .: "to" <*> liftM read (o .: "piece")]
 instance ToJSON Move where
     toJSON = fail "toJSON Move"
 
