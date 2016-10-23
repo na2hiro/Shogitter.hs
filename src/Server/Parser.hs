@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings, DeriveGeneric, DeriveAnyClass #-}
 module Server.Parser where
 
-import Data.Vector as V((!), toList, fromList, Vector(..))
+import Data.Vector as V((!), toList, fromList, Vector(..), length, head)
 import Data.HashMap.Strict as HM(HashMap, toList)
 import Data.Map as M(Map, fromList)
 import Data.Maybe(fromMaybe)
@@ -33,7 +33,7 @@ parse :: ByteString -> Maybe Request
 parse = decode
 
 stringify :: Maybe Response -> ByteString
-stringify = encode. fromMaybe (ErrorResponse "invalid request")
+stringify = encode. fromMaybe (ErrorResponse "cannot stringify")
 
 instance FromJSON Shogi where
     parseJSON = withObject "Shogi"$ \o -> do
@@ -49,7 +49,10 @@ instance ToJSON Shogi where
     toJSON = fail "toJSON Shogi"
 
 instance FromJSON Color where
-    parseJSON = withBool "Turn" (\p->return$ if p then Black else White)
+    parseJSON = withScientific "Turn"$ \n->case n of
+        0 -> return Black
+        1 -> return White
+        _ -> fail "Color should be 0 or 1"
 instance ToJSON Color
 
 instance FromJSON Hands where
@@ -68,9 +71,12 @@ instance ToJSON Hands where
 instance FromJSON Board where
     parseJSON obj = do
         vector2d <- withArray "array" (mapM parseRow) obj
-        let vector = V.fromList$ concat$ mapM V.toList$ V.toList vector2d
+        let xSize = V.length vector2d
+        let ySize = V.length$ V.head vector2d
+        let vector = V.fromList$ concatMap V.toList$ V.toList vector2d
 
         return$ initialBoard{
+            size = (xSize, ySize),
             vector = vector
         }
         where parseRow = withArray "row" (mapM parseCell)
