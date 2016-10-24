@@ -1,4 +1,4 @@
-module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, promoteReverse, uniqueMoveDef, fromJKFKindColor) where
+module Piece(Coord, Promoted, MoveDef(..), Color(..), Kind(..), Piece(..), moveDefs, promote, promoteReverse, uniqueMoveDef, fromJKFKindColor, toJKFKindColor) where
 
 import Color(Color(..))
 import Coord
@@ -52,6 +52,9 @@ showKind True KA = "UM"
 showKind True HI = "RY"
 
 -- We identify pieces by (Kind, Promote), though JKF identify by kind including promoted kind
+toJKFKindColor :: Piece -> (String, Color)
+toJKFKindColor (Piece color promoted kind) = (showKind promoted kind, color)
+
 fromJKFKindColor :: String -> Color -> Piece
 fromJKFKindColor k c = Piece c promoted kind
     where (promoted, kind) = fromJKFKind k

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings, DeriveGeneric, DeriveAnyClass #-}
 module Server.Parser where
 
-import Data.Vector as V((!), toList, fromList, Vector(..), length, head)
+import Data.Vector as V((!), toList, fromList, Vector(..), length, head, cons, take, drop, singleton)
 import Data.HashMap.Strict as HM(HashMap, toList)
 import Data.Map as M(Map, fromList)
 import Data.Maybe(fromMaybe)
@@ -18,7 +18,7 @@ import Color(Color(..))
 import Board(Board(..), Move(..))
 import Board.Const(initialBoard)
 import Hands(Hands(..))
-import Piece(Kind, fromJKFKindColor)
+import Piece(Kind, fromJKFKindColor, toJKFKindColor, Piece(..))
 import Coord(Coord(..))
 import Rule(RuleConfig(..), defaultRuleConfig, fromMap)
 
@@ -28,8 +28,12 @@ data Request = Request {
     move :: Move
 } deriving (Show, Generic, FromJSON)
 
-data Response = Response Board (Either S.Result [Move])
-              | ErrorResponse String deriving (Generic, ToJSON, Show)
+data Response = Response {
+    nextBoard :: Board,
+    next :: Either S.Result [Move]
+} | ErrorResponse {
+    error :: String
+} deriving (Generic, ToJSON, Show)
 
 parse :: ByteString -> Maybe Request
 parse = decode
@@ -55,7 +59,9 @@ instance FromJSON Color where
         0 -> return Black
         1 -> return White
         _ -> fail "Color should be 0 or 1"
-instance ToJSON Color
+instance ToJSON Color where
+    toJSON Black = Number 0
+    toJSON White = Number 1
 
 instance FromJSON Hands where
     parseJSON = withArray "Hands"$ \arr -> do
@@ -90,20 +96,35 @@ instance FromJSON Board where
                     c <- color
                     return$ fromJKFKindColor k c
 instance ToJSON Board where
-    toJSON = fail "toJSON Board"
+    toJSON Board{size = size, vector = vector} = toArray$ unconcat size$ fmap cellToJSON vector
+        where cellToJSON :: Maybe Piece -> Value
+              cellToJSON Nothing = object []
+              cellToJSON (Just p) = let (kind, color) = toJKFKindColor p
+                                    in object ["kind" .= kind, "color" .= toJSON color]
+              unconcat :: (Int, Int) -> Vector Value -> Vector (Vector Value)
+              unconcat s@(_, y) v = if null next
+                                        then V.singleton$ V.take y v
+                                        else V.take y v `cons` unconcat s next
+                  where next = V.drop y v
+              toArray :: Vector (Vector Value) -> Value
+              toArray v = Array$ fmap Array v
 
 instance FromJSON Move where
     parseJSON = withObject "move"$ \o -> asum [
         Move <$> o .: "from" <*> o .: "to" <*> o .:? "promote" .!= False,
         Put <$> o .: "to" <*> liftM read (o .: "piece")]
 instance ToJSON Move where
-    toJSON = fail "toJSON Move"
+    toJSON (Move from to promote) = object ["from".=toJSON from, "to".=toJSON to, "promote".=toJSON promote]
+    toJSON (Put to piece) = object ["to".=toJSON to, "piece".=show piece]
 
 instance FromJSON Coord where
     parseJSON = withObject "move"$ \o -> do
         x <- o .: "x"
         y <- o .: "y"
         return$ Coord x y
+
+instance ToJSON Coord where
+    toJSON (Coord x y) = object ["x".=x, "y".=y]
 
 instance ToJSON S.Result where
     toJSON = fail "toJSON Result"
