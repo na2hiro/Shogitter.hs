@@ -16,4 +16,4 @@ process (Request rule shogi move) = do
     let movesOrJudgment = case S.judge nextShogi of
             Nothing -> Right$ getMovesShogi nextShogi
             Just r -> Left r
-    return$ Response (board nextShogi) movesOrJudgment
+    return$ Response nextShogi movesOrJudgment

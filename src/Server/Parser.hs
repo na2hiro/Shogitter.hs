@@ -3,7 +3,7 @@ module Server.Parser where
 
 import Data.Vector as V((!), toList, fromList, Vector(..), length, head, cons, take, drop, singleton)
 import Data.HashMap.Strict as HM(HashMap, toList)
-import Data.Map as M(Map, fromList)
+import Data.Map as M(Map, fromList, mapKeys)
 import Data.Maybe(fromMaybe)
 import Data.Aeson
 import GHC.Generics(Generic)
@@ -29,7 +29,7 @@ data Request = Request {
 } deriving (Show, Generic, FromJSON)
 
 data Response = Response {
-    nextBoard :: Board,
+    newShogi :: Shogi,
     next :: Either S.Result [Move]
 } | ErrorResponse {
     error :: String
@@ -41,6 +41,7 @@ parse = decode
 stringify :: Maybe Response -> ByteString
 stringify = encode. fromMaybe (ErrorResponse "cannot stringify")
 
+-- TODO include rule?
 instance FromJSON Shogi where
     parseJSON = withObject "Shogi"$ \o -> do
         turn <- o .: "color"
@@ -51,8 +52,12 @@ instance FromJSON Shogi where
             board = board,
             hands = hands
         }
+-- TODO include rule?
 instance ToJSON Shogi where
-    toJSON = fail "toJson Shogi"
+    toJSON Shogi{hands=hands, board=board, turn=turn} = object [
+        "board" .= toJSON board,
+        "hands" .= toJSON hands,
+        "color" .= toJSON turn]
 
 instance FromJSON Color where
     parseJSON = withScientific "Turn"$ \n->case n of
@@ -73,8 +78,13 @@ instance FromJSON Hands where
                 return$ keyToString hm
               keyToString :: HashMap String Int -> Map Kind Int
               keyToString = M.fromList. map (first read). HM.toList
+-- TODO: Kind should be parsed/stringified correctly. toUpperCase etc
 instance ToJSON Hands where
-    toJSON = fail "toJSON Hands"
+    toJSON (Hands (hand0, hand1)) = toJSON [
+        toJSON hand0',
+        toJSON hand1']
+        where hand0' = mapKeys show hand0
+              hand1' = mapKeys show hand1
 
 instance FromJSON Board where
     parseJSON obj = do
