@@ -198,3 +198,7 @@ canPromote _ board coord = canPromote Black board$ reverseCoord board coord
 reverseCoord :: Board -> Coord -> Coord
 reverseCoord board c = max+min-c
     where (min, max) = bounds board
+
+{-
+fromCsa :: String -> Board
+-}

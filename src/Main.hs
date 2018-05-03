@@ -1,17 +1,28 @@
 module Main where
 
+import Data.ByteString.Lazy.Char8(pack, unpack)
+import Data.Tree.Game_tree.Game_tree(Game_tree(..))
+import System.Environment(getArgs)
+
 import Shogi
 import Shogi.Const(initialShogi)
 import Board
 import Coord
 import Piece(Kind(FU))
-import System.Environment(getArgs)
 import Search.MaterialAlphaBeta
-import Data.Tree.Game_tree.Game_tree(Game_tree(..))
-import Server.Server
+import Server.Server(serve)
 
 main :: IO ()
 main = do
+    args <- getArgs
+    let input = pack (args!!0)
+    let output = serve input
+    putStrLn$ unpack output
+
+
+-- | Alpha beta search
+main3 :: IO ()
+main3 = do
     args <- getArgs
     let num = read (args!!0) :: Int
     let cached = read (args!!1) :: Bool

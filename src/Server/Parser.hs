@@ -52,7 +52,7 @@ instance FromJSON Shogi where
             hands = hands
         }
 instance ToJSON Shogi where
-    toJSON = fail "toJSON Shogi"
+    toJSON = fail "toJson Shogi"
 
 instance FromJSON Color where
     parseJSON = withScientific "Turn"$ \n->case n of

@@ -16,6 +16,7 @@ extra-deps:
 - hspec-expectations-0.8.0
 - scientific-0.3.4.9
 - semigroups-0.18.2
-- tagged-0.8.4
+- tagged-0.8.5
 - unordered-containers-0.2.7.1
 resolver: lts-4.2
+allow-newer: true

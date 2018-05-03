@@ -99,3 +99,8 @@ doMove move@(Put _ kind) shogi = do
     guard$ isLegalMove (board shogi) move
     _ <- removeFromHands (turn shogi) kind (hands shogi)
     return$ unsafeDoMove move shogi
+
+{-
+parseCsa :: String -> Shogi
+parseCsa strs
+-}
