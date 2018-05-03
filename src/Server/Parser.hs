@@ -45,7 +45,7 @@ stringify = encode. fromMaybe (ErrorResponse "cannot stringify")
 instance FromJSON Shogi where
     parseJSON = withObject "Shogi"$ \o -> do
         turn <- o .: "color"
-        board <- o .: "data"
+        board <- o .: "board"
         hands <- o .: "hands"
         return$ initialShogi {
             turn = turn,
