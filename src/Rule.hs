@@ -53,18 +53,6 @@ instance Show RuleConfig where
       showRule rule =
         "  " ++ ruleId rule ++ ": " ++ ruleInstanceId rule ++ ",\n"
 
-injectRule :: RuleConfig -> Shogi -> Shogi
-injectRule conf shogi = shogi {getJudge = Rule.judge conf, board = board'}
-  where
-    board' =
-      (board shogi)
-        { getMover = mover conf
-        , getEffector = effector conf
-        , getAbilityProxy = abilityProxy conf
-        , getSlicer = slicer conf
-        , getMoverPredicator = moverPredicator conf
-        }
-
 fromMap :: Map String String -> RuleConfig
 fromMap map =
   RuleConfig

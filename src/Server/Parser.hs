@@ -41,8 +41,7 @@ import Shogi.Const (initialShogi)
 import Shogi.Judge
 
 data Request = Request
-  { rule :: RuleConfig
-  , shogi :: Shogi
+  { shogi :: Shogi
   , move :: Move
   } deriving (Show, Generic, FromJSON)
 
@@ -58,14 +57,25 @@ parse = decode
 stringify :: Maybe Response -> ByteString
 stringify = encode . fromMaybe (ErrorResponse "cannot stringify")
 
--- TODO include rule?
 instance FromJSON Shogi where
   parseJSON =
     withObject "Shogi" $ \o -> do
       turn <- o .: "color"
       board <- o .: "board"
       hands <- o .: "hands"
-      return $ initialShogi {turn = turn, board = board, hands = hands}
+      ruleConfig <- o .: "rule"
+      return $ initialShogi {
+        turn = turn,
+        board = board {
+          getAbilityProxy = abilityProxy ruleConfig,
+          getEffector = effector ruleConfig,
+          getMover = mover ruleConfig,
+          getMoverPredicator = moverPredicator ruleConfig,
+          getSlicer = slicer ruleConfig
+        },
+        hands = hands,
+        getJudge = judge ruleConfig
+      }
 
 -- TODO include rule?
 instance ToJSON Shogi where
@@ -191,31 +201,31 @@ instance ToJSON RuleConfig where
   toJSON _ = "\"TODO: rule\""
 
 instance FromJSON AbilityProxy where
-    parseJSON = withObject "rule"$ \o -> do
+    parseJSON = withObject "rule" $ \o -> do
        abilityProxyId <- o .: "AbilityProxy"
        return$ getAbilityProxyById abilityProxyId
 
 instance FromJSON Effector where
-    parseJSON = withObject "rule"$ \o -> do
+    parseJSON = withObject "rule" $ \o -> do
        effectorId <- o .: "Effector"
        return$ getEffectorById effectorId
 
 instance FromJSON Mover where
-    parseJSON = withObject "rule"$ \o -> do
+    parseJSON = withObject "rule" $ \o -> do
        moverId <- o .: "Mover"
        return$ getMoverById moverId
 
 instance FromJSON MoverPredicator where
-    parseJSON = withObject "rule"$ \o -> do
+    parseJSON = withObject "rule" $ \o -> do
        moverPredicatorId <- o .: "MoverPredicator"
        return$ getMoverPredicatorById moverPredicatorId
 
 instance FromJSON Slicer where
-    parseJSON = withObject "rule"$ \o -> do
+    parseJSON = withObject "rule" $ \o -> do
        slicerId <- o .: "Slicer"
        return$ getSlicerById slicerId
 
 instance FromJSON Judge where
-    parseJSON = withObject "rule"$ \o -> do
+    parseJSON = withObject "rule" $ \o -> do
        judgeId <- o .: "Judge"
        return$ getJudgeById judgeId
