@@ -73,6 +73,8 @@ spec = do
     it "should contain hands" $
       responseString `shouldContain` "\"hands\":[{},{}]"
     it "should contain board" $ responseString `shouldContain` "\"board\":["
+    it "should contain rule" $ responseString `shouldContain` "\"rule\":{"
+    it "should contain AbilityProxy" $ responseString `shouldContain` "\"AbilityProxy\":{"
   describe "serve" $ do
     it "initial - (7,7) - (2,7). Usual shogi" $
       BS.take 8 (serve jsonNormalRules) `shouldBe` "{\"next\":"

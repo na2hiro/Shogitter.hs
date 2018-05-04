@@ -77,11 +77,22 @@ instance FromJSON Shogi where
         getJudge = judge ruleConfig
       }
 
--- TODO include rule?
 instance ToJSON Shogi where
-  toJSON Shogi {hands = hands, board = board, turn = turn} =
+  toJSON Shogi {hands = hands, board = board, turn = turn, getJudge = getJudge} =
     object
-      ["board" .= toJSON board, "hands" .= toJSON hands, "color" .= toJSON turn]
+      [
+        "board" .= toJSON board,
+        "hands" .= toJSON hands,
+        "color" .= toJSON turn,
+        "rule" .= toJSON RuleConfig {
+           abilityProxy = getAbilityProxy board,
+           effector = getEffector board,
+           mover = getMover board,
+           moverPredicator = getMoverPredicator board,
+           slicer = getSlicer board,
+           judge = getJudge
+         }
+      ]
 
 instance FromJSON Color where
   parseJSON =
@@ -198,34 +209,68 @@ instance FromJSON RuleConfig where
       }
 
 instance ToJSON RuleConfig where
-  toJSON _ = "\"TODO: rule\""
+  toJSON RuleConfig {
+    abilityProxy = abilityProxy,
+    effector = effector,
+    mover = mover,
+    moverPredicator = moverPredicator,
+    slicer = slicer,
+    judge = judge
+  } =
+    object
+      [
+        "AbilityProxy" .= toJSON abilityProxy,
+        "Effector" .= toJSON effector,
+        "Mover" .= toJSON mover,
+        "MoverPredicator" .= toJSON moverPredicator,
+        "Slicer" .= toJSON slicer,
+        "Judge" .= toJSON judge
+      ]
 
 instance FromJSON AbilityProxy where
     parseJSON = withObject "rule" $ \o -> do
        abilityProxyId <- o .: "AbilityProxy"
        return$ getAbilityProxyById abilityProxyId
 
+instance ToJSON AbilityProxy where
+  toJSON AbilityProxy{abilityProxyId = abilityProxyId} = object ["AbilityProxy" .= abilityProxyId]
+
 instance FromJSON Effector where
     parseJSON = withObject "rule" $ \o -> do
        effectorId <- o .: "Effector"
        return$ getEffectorById effectorId
+
+instance ToJSON Effector where
+  toJSON Effector{effectorId = effectorId} = object ["Effector" .= effectorId]
 
 instance FromJSON Mover where
     parseJSON = withObject "rule" $ \o -> do
        moverId <- o .: "Mover"
        return$ getMoverById moverId
 
+instance ToJSON Mover where
+  toJSON Mover{moverId = moverId} = object ["Mover" .= moverId]
+
 instance FromJSON MoverPredicator where
     parseJSON = withObject "rule" $ \o -> do
        moverPredicatorId <- o .: "MoverPredicator"
        return$ getMoverPredicatorById moverPredicatorId
+
+instance ToJSON MoverPredicator where
+  toJSON MoverPredicator{moverPredicatorId = moverPredicatorId} = object ["MoverPredicator" .= moverPredicatorId]
 
 instance FromJSON Slicer where
     parseJSON = withObject "rule" $ \o -> do
        slicerId <- o .: "Slicer"
        return$ getSlicerById slicerId
 
+instance ToJSON Slicer where
+  toJSON Slicer{slicerId = slicerId} = object ["Slicer" .= slicerId]
+
 instance FromJSON Judge where
     parseJSON = withObject "rule" $ \o -> do
        judgeId <- o .: "Judge"
        return$ getJudgeById judgeId
+
+instance ToJSON Judge where
+  toJSON Judge{judgeId = judgeId} = object ["Judge" .= judgeId]
