@@ -39,7 +39,7 @@ data RuleConfig = RuleConfig
   , moverPredicator :: MoverPredicator
   , slicer :: Slicer
   , judge :: Judge
-  }
+  } deriving Eq
 
 instance Show RuleConfig where
   show ruleConfig =

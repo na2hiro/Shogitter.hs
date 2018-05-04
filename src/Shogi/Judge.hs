@@ -9,6 +9,7 @@ module Shogi.Judge
   , gomokuJudge
   , winHandCountJudge
   , judges
+  , getJudgeById
   ) where
 
 import Board
@@ -181,3 +182,5 @@ winHandCountJudge = Judge {judgeId = "winHandCount", runJudge = judge}
 loseHandCountJudge = Judge {judgeId = "loseHandCount", runJudge = judge}
   where
     judge = undefined
+
+getJudgeById id = head (filter (\ap -> judgeId ap == id) judges)

@@ -12,6 +12,7 @@ module Board.AbilityProxy
   , taimenAbilityProxy
   , haimenAbilityProxy
   , abilityProxies
+  , getAbilityProxyById
   ) where
 
 import Board
@@ -173,6 +174,8 @@ haimenAbilityProxy =
         Just (Piece color' promoted kind)
           | color /= color' -> [(promoted, kind)]
         _ -> normalProxy c b
+
+getAbilityProxyById id = head (filter (\ap -> abilityProxyId ap == id) abilityProxies)
 
 normalProxy :: Coord -> Board -> [(Promoted, Kind)]
 normalProxy c b = return $ pieceToPromotedKind $ unsafeGet b c

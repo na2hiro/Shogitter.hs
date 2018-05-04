@@ -8,6 +8,7 @@ module Board.Effector
   , dondenEffector
   , gravityEffector
   , effectors
+  , getEffectorById
   ) where
 
 import Data.List (find)
@@ -182,3 +183,5 @@ gravity board = concatMap gravityRow [1 .. y]
       where
         candidates = filter isJust $ map (get board) coords
         coords = map (flip Coord y) [1 .. x]
+
+getEffectorById id = head (filter (\ap -> effectorId ap == id) effectors)

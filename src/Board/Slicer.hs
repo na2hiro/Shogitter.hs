@@ -4,6 +4,7 @@ module Board.Slicer
   , donutSlicer
   , reflectSlicer
   , slicers
+  , getSlicerById
   ) where
 
 import Board
@@ -98,3 +99,5 @@ modC (min, max) c =
   min + Coord (getX offsetted `mod` getX max) (getY offsetted `mod` getY max)
   where
     offsetted = c - min
+
+getSlicerById id = head (filter (\ap -> slicerId ap == id) slicers)

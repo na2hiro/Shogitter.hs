@@ -3,6 +3,7 @@ module Board.MoverPredicator
   , freezeMoverPredicator
   , madrasMoverPredicator
   , moverPredicators
+  , getMoverPredicatorById
   ) where
 
 import Board
@@ -39,3 +40,5 @@ madrasMoverPredicator =
           | turn /= color && promoted == promoted' && kind == kind' = True
         isMadrasEnemy _ = False
         enemiesDestinations = concatMap (destinationsAt board) enemies
+
+getMoverPredicatorById id = head (filter (\ap -> moverPredicatorId ap == id) moverPredicators)

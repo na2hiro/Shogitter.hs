@@ -24,15 +24,21 @@ import Data.Vector as V
   )
 import GHC.Generics (Generic)
 
-import Board (Board(..), Move(..))
-import Board.Const (initialBoard)
 import Color (Color(..))
 import Coord (Coord(..))
+import Board (Board(..), Move(..), AbilityProxy(..), Effector(..), Mover(..), MoverPredicator(..), Slicer(..))
+import Board.AbilityProxy
+import Board.Const (initialBoard)
+import Board.Effector
+import Board.Mover
+import Board.MoverPredicator
+import Board.Slicer
 import Hands (Hands(..))
 import Piece (Kind, Piece(..), fromJKFKindColor, toJKFKindColor)
 import Rule (RuleConfig(..), defaultRuleConfig, fromMap)
-import Shogi as S (Result(..), Shogi(..))
+import Shogi as S (Result(..), Shogi(..), Judge(..))
 import Shogi.Const (initialShogi)
+import Shogi.Judge
 
 data Request = Request
   { rule :: RuleConfig
@@ -164,9 +170,52 @@ instance ToJSON S.Result where
   toJSON = fail "toJSON Result"
 
 instance FromJSON RuleConfig where
-  parseJSON text = do
-    hm <- parseJSON text
-    return $ fromMap hm
+  parseJSON =
+    withObject "rule" $ \o -> do
+      abilityProxy <- parseJSON (Object o)
+      effector <- parseJSON (Object o)
+      mover <- parseJSON (Object o)
+      moverPredicator <- parseJSON (Object o)
+      slicer <- parseJSON (Object o)
+      judge <- parseJSON (Object o)
+      return RuleConfig {
+        abilityProxy = abilityProxy,
+        effector = effector,
+        mover = mover,
+        moverPredicator = moverPredicator,
+        slicer = slicer,
+        judge = judge
+      }
 
 instance ToJSON RuleConfig where
   toJSON _ = "\"TODO: rule\""
+
+instance FromJSON AbilityProxy where
+    parseJSON = withObject "rule"$ \o -> do
+       abilityProxyId <- o .: "AbilityProxy"
+       return$ getAbilityProxyById abilityProxyId
+
+instance FromJSON Effector where
+    parseJSON = withObject "rule"$ \o -> do
+       effectorId <- o .: "Effector"
+       return$ getEffectorById effectorId
+
+instance FromJSON Mover where
+    parseJSON = withObject "rule"$ \o -> do
+       moverId <- o .: "Mover"
+       return$ getMoverById moverId
+
+instance FromJSON MoverPredicator where
+    parseJSON = withObject "rule"$ \o -> do
+       moverPredicatorId <- o .: "MoverPredicator"
+       return$ getMoverPredicatorById moverPredicatorId
+
+instance FromJSON Slicer where
+    parseJSON = withObject "rule"$ \o -> do
+       slicerId <- o .: "Slicer"
+       return$ getSlicerById slicerId
+
+instance FromJSON Judge where
+    parseJSON = withObject "rule"$ \o -> do
+       judgeId <- o .: "Judge"
+       return$ getJudgeById judgeId

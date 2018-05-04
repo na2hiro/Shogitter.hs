@@ -101,6 +101,9 @@ data Judge = Judge
   , runJudge :: Shogi -> Maybe Result
   }
 
+instance Eq Judge where
+    a1 == a2 = judgeId a1 == judgeId a2
+
 judge :: Shogi -> Maybe Result
 judge shogi = runJudge (getJudge shogi) shogi
 

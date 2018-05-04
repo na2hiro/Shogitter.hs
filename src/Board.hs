@@ -57,7 +57,8 @@ data Mover = Mover
   { moverId :: String
   , runMover :: Color -> Move -> Board -> (Board, [Kind])
   }
-
+instance Eq Mover where
+    a1 == a2 = moverId a1 == moverId a2
 move :: Color -> Move -> Board -> (Board, [Kind])
 move color move board = runMover (getMover board) color move board
 
@@ -67,6 +68,8 @@ data Effector = Effector
   , runEffectorPut :: Coord -> Board -> Board
   }
 
+instance Eq Effector where
+    a1 == a2 = effectorId a1 == effectorId a2
 effect :: Coord -> Coord -> Board -> Board
 effect from to board = runEffector (getEffector board) from to board
 
@@ -78,6 +81,9 @@ data AbilityProxy = AbilityProxy
   , runAbilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
   }
 
+instance Eq AbilityProxy where
+    a1 == a2 = abilityProxyId a1 == abilityProxyId a2
+
 abilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
 abilityProxy color from board =
   runAbilityProxy (getAbilityProxy board) color from board
@@ -87,6 +93,9 @@ data Slicer = Slicer
   , runSliceAsCoord :: Board -> Coord -> Coord -> [Coord]
   , runRegularity :: Bool
   }
+
+instance Eq Slicer where
+    a1 == a2 = slicerId a1 == slicerId a2
 
 sliceAsCoord :: Board -> Coord -> Coord -> [Coord]
 sliceAsCoord board base vec = runSliceAsCoord (getSlicer board) board base vec
@@ -119,6 +128,9 @@ data MoverPredicator = MoverPredicator
   { moverPredicatorId :: String
   , runMoverPredicator :: Board -> (Coord, Piece) -> Bool
   }
+
+instance Eq MoverPredicator where
+    a1 == a2 = moverPredicatorId a1 == moverPredicatorId a2
 
 canMove :: Board -> (Coord, Piece) -> Bool
 canMove board pair = runMoverPredicator (getMoverPredicator board) board pair

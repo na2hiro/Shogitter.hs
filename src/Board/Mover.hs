@@ -1,10 +1,10 @@
 module Board.Mover
   ( normalMover
   , movers
+  , getMoverById
   ) where
 
 import Data.Maybe (maybeToList)
-
 import Board
 import Piece (Piece(..), promote)
 
@@ -23,3 +23,5 @@ normalMover = Mover {runMover = move, moverId = "normal"}
     move turn (Put to kind) board = (effectPut to board', [])
       where
         board' = set board (to, Just $ Piece turn False kind)
+
+getMoverById id = head (filter (\ap -> moverId ap == id) movers)
