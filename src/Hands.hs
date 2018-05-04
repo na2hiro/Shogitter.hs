@@ -1,53 +1,83 @@
-module Hands(Hands(..), kindsHand, addToHands, removeFromHands, initialHands, Hands.toList) where
+module Hands
+  ( Hands(..)
+  , kindsHand
+  , addToHands
+  , removeFromHands
+  , initialHands
+  , Hands.toList
+  ) where
 
-import Piece(Color(..), Kind)
-import Data.Map as M(Map, lookup, insert, delete, empty, foldrWithKey, keys, toList)
-import Control.Arrow((***))
-import Control.Monad(liftM, liftM2)
+import Control.Arrow ((***))
+import Control.Monad (liftM, liftM2)
 import Data.Functor.Identity
+import Data.Map as M
+  ( Map
+  , delete
+  , empty
+  , foldrWithKey
+  , insert
+  , keys
+  , lookup
+  , toList
+  )
+import Piece (Color(..), Kind)
 
 type Hand = Map Kind Int
-data Hands = Hands (Hand, Hand) deriving (Eq)
+
+data Hands =
+  Hands (Hand, Hand)
+  deriving (Eq)
+
 instance Show Hands where
-    show (Hands (b, w)) = showHand Black b ++ showHand White w
-        where showHand c hand = "P" ++ show c ++ foldrWithKey (\kind num str->str++(concat. replicate num$ "00"++show kind)) "" hand ++ "\n"
+  show (Hands (b, w)) = showHand Black b ++ showHand White w
+    where
+      showHand c hand =
+        "P" ++
+        show c ++
+        foldrWithKey
+          (\kind num str -> str ++ (concat . replicate num $ "00" ++ show kind))
+          ""
+          hand ++
+        "\n"
 
 initialHands = Hands (empty, empty)
 
 kindsHand :: Color -> Hands -> [Kind]
-kindsHand color = keys. getHand color
+kindsHand color = keys . getHand color
 
 getHand :: Color -> Hands -> Hand
 getHand Black (Hands t) = fst t
 getHand _ (Hands t) = snd t
 
 applyHand :: Color -> (Hand -> Hand) -> Hands -> Hands
-applyHand color f = runIdentity. applyHandM color (Identity. f)
+applyHand color f = runIdentity . applyHandM color (Identity . f)
 
 applyHandM :: Monad m => Color -> (Hand -> m Hand) -> Hands -> m Hands
-applyHandM Black f (Hands t) = liftM Hands$ liftTuple$ (f *** return) t
-applyHandM White f (Hands t) = liftM Hands$ liftTuple$ (return *** f) t
+applyHandM Black f (Hands t) = liftM Hands $ liftTuple $ (f *** return) t
+applyHandM White f (Hands t) = liftM Hands $ liftTuple $ (return *** f) t
 
 liftTuple :: Monad m => (m a, m b) -> m (a, b)
-liftTuple = uncurry$ liftM2 (,)
+liftTuple = uncurry $ liftM2 (,)
 
 addToHand :: Kind -> Hand -> Hand
-addToHand kind hand = case M.lookup kind hand of
-                        Nothing -> insert kind 1 hand
-                        Just n -> insert kind (n+1) hand
+addToHand kind hand =
+  case M.lookup kind hand of
+    Nothing -> insert kind 1 hand
+    Just n -> insert kind (n + 1) hand
 
 removeFromHand :: Kind -> Hand -> Maybe Hand
 removeFromHand kind hand = do
-    n <- M.lookup kind hand
-    return$ if n==1
-        then delete kind hand
-        else insert kind (n-1) hand
+  n <- M.lookup kind hand
+  return $
+    if n == 1
+      then delete kind hand
+      else insert kind (n - 1) hand
 
 addToHands :: Color -> Kind -> Hands -> Hands
-addToHands color = applyHand color. addToHand
+addToHands color = applyHand color . addToHand
 
 removeFromHands :: Color -> Kind -> Hands -> Maybe Hands
-removeFromHands color = applyHandM color. removeFromHand
+removeFromHands color = applyHandM color . removeFromHand
 
 toList :: Color -> Hands -> [(Kind, Int)]
-toList color hands = M.toList$ getHand color hands
+toList color hands = M.toList $ getHand color hands

@@ -1,20 +1,19 @@
 module Shogi.Const where
 
-import Shogi(Shogi(..), initialHistory)
-import Shogi.Judge(normalJudge)
-import Piece(Color(..))
-import Board.Const(initialBoard)
-import Hands(initialHands)
+import Board.Const (initialBoard)
+import Hands (initialHands)
+import Piece (Color(..))
+import Shogi (Shogi(..), initialHistory)
+import Shogi.Judge (normalJudge)
 
-initialShogi = Shogi {
-    getJudge = normalJudge,
-
-    history = initialHistory,
-    turn = Black,
-    board = initialBoard,
-    hands = initialHands
-}
-
+initialShogi =
+  Shogi
+    { getJudge = normalJudge
+    , history = initialHistory
+    , turn = Black
+    , board = initialBoard
+    , hands = initialHands
+    }
 {-
 yaneuraohCsa =
     "P1-KY-KE *  * -OU *  * -KE-KY\n"++

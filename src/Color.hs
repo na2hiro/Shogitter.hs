@@ -1,11 +1,18 @@
 {-# LANGUAGE DeriveGeneric #-}
--- | Color of players
-module Color(Color(..), opposite) where
-
-import GHC.Generics(Generic)
 
 -- | Color of players
-data Color = Black | White deriving (Eq, Generic)
+module Color
+  ( Color(..)
+  , opposite
+  ) where
+
+import GHC.Generics (Generic)
+
+-- | Color of players
+data Color
+  = Black
+  | White
+  deriving (Eq, Generic)
 
 -- |
 -- >>> Black
@@ -13,8 +20,8 @@ data Color = Black | White deriving (Eq, Generic)
 -- >>> White
 -- -
 instance Show Color where
-    show Black = "+"
-    show White = "-"
+  show Black = "+"
+  show White = "-"
 
 -- |
 -- get opposite color

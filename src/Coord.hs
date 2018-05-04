@@ -1,14 +1,22 @@
 -- | Coordinate of pieces on boards
-module Coord(Coord(..), getX, getY, direct) where
+module Coord
+  ( Coord(..)
+  , getX
+  , getY
+  , direct
+  ) where
 
+import Color (Color(..))
 import Data.Ix
-import Color(Color(..))
 
 -- | Coordinate of pieces on boards
-data Coord = Coord Int Int deriving (Eq, Ord)
+data Coord =
+  Coord Int
+        Int
+  deriving (Eq, Ord)
 
 instance Show Coord where
-    show (Coord x y) = show (x,y)
+  show (Coord x y) = show (x, y)
 
 -- | Element-wise operations
 --
@@ -17,17 +25,19 @@ instance Show Coord where
 -- >>> Coord 1 2 - Coord 3 4 == Coord (-2) (-2)
 -- True
 instance Num Coord where
-    (Coord x y) + (Coord x' y') = Coord (x+x') (y+y')
-    (Coord x y) - (Coord x' y') = Coord (x-x') (y-y')
-    (Coord x y) * (Coord x' y') = Coord (x*x') (y*y')
-    abs (Coord x y)  = Coord (abs x) (abs y)
-    signum (Coord x y)  = Coord (signum x) (signum y)
-    fromInteger x  = let x' = fromInteger x in Coord x' x'
+  (Coord x y) + (Coord x' y') = Coord (x + x') (y + y')
+  (Coord x y) - (Coord x' y') = Coord (x - x') (y - y')
+  (Coord x y) * (Coord x' y') = Coord (x * x') (y * y')
+  abs (Coord x y) = Coord (abs x) (abs y)
+  signum (Coord x y) = Coord (signum x) (signum y)
+  fromInteger x =
+    let x' = fromInteger x
+     in Coord x' x'
 
 instance Ix Coord where
-    range (c1, c2) = map fromTuple$ range (toTuple c1, toTuple c2)
-    inRange (c1, c2) c = inRange (toTuple c1, toTuple c2)$ toTuple c
-    index (c1, c2) c = index (toTuple c1, toTuple c2)$ toTuple c
+  range (c1, c2) = map fromTuple $ range (toTuple c1, toTuple c2)
+  inRange (c1, c2) c = inRange (toTuple c1, toTuple c2) $ toTuple c
+  index (c1, c2) c = index (toTuple c1, toTuple c2) $ toTuple c
 
 -- |
 -- Get x of the Coord
