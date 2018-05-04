@@ -22,7 +22,7 @@ Legal move generator and simple AI for all following combinations of Japanese ch
 ### Commands
 ```sh
 stack build --fast # install dependency and build
-stack exec -- ShogitterHS (JSON input here) # run
+stack exec -- ShogitterHSCommand (JSON input here) # run
 stack test --fast # test
 ```
 
