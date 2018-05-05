@@ -89,6 +89,10 @@ spec = do
       BS.take 8 (serveInitialBoard jsonNormalRules) `shouldBe` "{\"next\":"
     it "initial board. Shogi variation" $
       BS.take 8 (serveInitialBoard jsonRulesVariation) `shouldBe` "{\"next\":"
+    it "initial board. Shogi variation contains normal" $
+      unpack (serveInitialBoard jsonRulesVariation) `shouldContain` "normal"
+    it "initial board. Shogi variation contains nuclear" $
+      unpack (serveInitialBoard jsonRulesVariation) `shouldContain` "nuclear"
   describe "serve move" $ do
     it "move - (7,7) - (2,7). Usual shogi" $
       BS.take 8 (serveMove jsonNormalRulesMove) `shouldBe` "{\"next\":"

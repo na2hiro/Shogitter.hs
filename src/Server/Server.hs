@@ -2,9 +2,11 @@ module Server.Server where
 
 import Data.ByteString.Lazy (ByteString)
 
+import Board (Board(..), Move(..), AbilityProxy(..), Effector(..), Mover(..), MoverPredicator(..), Slicer(..))
+import Board.Const (initialBoard)
 import Rule (RuleConfig(..))
 import Server.Parser (InitialBoardRequest(..), MoveRequest(..), Response(..), parseInitialBoardRequest, parseMoveRequest, stringify)
-import Shogi as S (Shogi, board, doMove, getMovesShogi, judge)
+import Shogi as S (Shogi(..), Judge(..), board, doMove, getMovesShogi, judge)
 import Shogi.Const (initialShogi)
 
 
@@ -15,8 +17,17 @@ serveInitialBoard json = stringify $ processInitialBoardRequest =<< parseInitial
 
 processInitialBoardRequest :: InitialBoardRequest -> Maybe Response
 processInitialBoardRequest (InitialBoardRequest ruleConfig) = do
-  return $ Response initialShogi (Right $ getMovesShogi initialShogi)
-
+  return $ Response shogi (Right $ getMovesShogi shogi)
+  where shogi = initialShogi {
+    board = initialBoard {
+      getAbilityProxy = abilityProxy ruleConfig,
+      getEffector = effector ruleConfig,
+      getMover = mover ruleConfig,
+      getMoverPredicator = moverPredicator ruleConfig,
+      getSlicer = slicer ruleConfig
+    },
+    getJudge = Rule.judge ruleConfig
+  }
 
 -- Process request for move
 
