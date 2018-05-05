@@ -219,12 +219,12 @@ instance ToJSON RuleConfig where
   } =
     object
       [
-        "AbilityProxy" .= toJSON abilityProxy,
-        "Effector" .= toJSON effector,
-        "Mover" .= toJSON mover,
-        "MoverPredicator" .= toJSON moverPredicator,
-        "Slicer" .= toJSON slicer,
-        "Judge" .= toJSON judge
+        "AbilityProxy" .= abilityProxyId abilityProxy,
+        "Effector" .= effectorId effector,
+        "Mover" .= moverId mover,
+        "MoverPredicator" .= moverPredicatorId moverPredicator,
+        "Slicer" .=slicerId slicer,
+        "Judge" .= judgeId judge
       ]
 
 instance FromJSON AbilityProxy where
@@ -232,45 +232,27 @@ instance FromJSON AbilityProxy where
        abilityProxyId <- o .: "AbilityProxy"
        return$ getAbilityProxyById abilityProxyId
 
-instance ToJSON AbilityProxy where
-  toJSON AbilityProxy{abilityProxyId = abilityProxyId} = object ["AbilityProxy" .= abilityProxyId]
-
 instance FromJSON Effector where
     parseJSON = withObject "rule" $ \o -> do
        effectorId <- o .: "Effector"
        return$ getEffectorById effectorId
-
-instance ToJSON Effector where
-  toJSON Effector{effectorId = effectorId} = object ["Effector" .= effectorId]
 
 instance FromJSON Mover where
     parseJSON = withObject "rule" $ \o -> do
        moverId <- o .: "Mover"
        return$ getMoverById moverId
 
-instance ToJSON Mover where
-  toJSON Mover{moverId = moverId} = object ["Mover" .= moverId]
-
 instance FromJSON MoverPredicator where
     parseJSON = withObject "rule" $ \o -> do
        moverPredicatorId <- o .: "MoverPredicator"
        return$ getMoverPredicatorById moverPredicatorId
-
-instance ToJSON MoverPredicator where
-  toJSON MoverPredicator{moverPredicatorId = moverPredicatorId} = object ["MoverPredicator" .= moverPredicatorId]
 
 instance FromJSON Slicer where
     parseJSON = withObject "rule" $ \o -> do
        slicerId <- o .: "Slicer"
        return$ getSlicerById slicerId
 
-instance ToJSON Slicer where
-  toJSON Slicer{slicerId = slicerId} = object ["Slicer" .= slicerId]
-
 instance FromJSON Judge where
     parseJSON = withObject "rule" $ \o -> do
        judgeId <- o .: "Judge"
        return$ getJudgeById judgeId
-
-instance ToJSON Judge where
-  toJSON Judge{judgeId = judgeId} = object ["Judge" .= judgeId]
