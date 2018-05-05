@@ -36,23 +36,29 @@ import Board.Slicer
 import Hands (Hands(..))
 import Piece (Kind, Piece(..), fromJKFKindColor, toJKFKindColor)
 import Rule (RuleConfig(..), defaultRuleConfig, fromMap)
-import Shogi as S (Result(..), Shogi(..), Judge(..))
+import Shogi (Result(..), Shogi(..), Judge(..))
 import Shogi.Const (initialShogi)
 import Shogi.Judge
 
-data Request = Request
+data InitialBoardRequest = InitialBoardRequest
+  { rule :: RuleConfig } deriving (Show, Generic, FromJSON)
+
+data MoveRequest = MoveRequest
   { shogi :: Shogi
   , move :: Move
   } deriving (Show, Generic, FromJSON)
 
 data Response
   = Response { newShogi :: Shogi
-             , next :: Either S.Result [Move] }
+             , next :: Either Shogi.Result [Move] }
   | ErrorResponse { error :: String }
   deriving (Generic, ToJSON, Show)
 
-parse :: ByteString -> Maybe Request
-parse = decode
+parseInitialBoardRequest :: ByteString -> Maybe InitialBoardRequest
+parseInitialBoardRequest = decode
+
+parseMoveRequest :: ByteString -> Maybe MoveRequest
+parseMoveRequest = decode
 
 stringify :: Maybe Response -> ByteString
 stringify = encode . fromMaybe (ErrorResponse "cannot stringify")
@@ -187,7 +193,7 @@ instance FromJSON Coord where
 instance ToJSON Coord where
   toJSON (Coord x y) = object ["x" .= x, "y" .= y]
 
-instance ToJSON S.Result where
+instance ToJSON Shogi.Result where
   toJSON = fail "toJSON Result"
 
 instance FromJSON RuleConfig where

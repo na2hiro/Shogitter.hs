@@ -7,7 +7,7 @@ import Data.ByteString.Lazy as BS (take)
 import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Maybe (isJust)
 import Server.Parser
-import Server.Server (serve)
+import Server.Server (serveInitialBoard, serveMove)
 import Test.Hspec
 
 import Board (Move(..))
@@ -24,15 +24,23 @@ import Shogi.Judge
 import Rule
 
 jsonNormalRules =
+  "{\"rule\":{\"AbilityProxy\": \"normal\", \"Effector\": \"normal\", \"Mover\": \"normal\", \"MoverPredicator\": \"normal\", \"Slicer\": \"normal\", \"Judge\": \"normal\"}}"
+jsonRulesVariation =
+  "{\"rule\":{\"AbilityProxy\": \"normal\", \"Effector\": \"nuclear\", \"Mover\": \"normal\", \"MoverPredicator\": \"madras\", \"Slicer\": \"donut\", \"Judge\": \"mate\"}}"
+
+jsonNormalRulesMove =
   "{\"shogi\":{\"rule\":{\"AbilityProxy\": \"normal\", \"Effector\": \"normal\", \"Mover\": \"normal\", \"MoverPredicator\": \"normal\", \"Slicer\": \"normal\", \"Judge\": \"normal\"}, \"color\":0,\"board\":[[{\"color\":1,\"kind\":\"KY\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KY\"}],[{\"color\":1,\"kind\":\"KE\"},{\"color\":1,\"kind\":\"KA\"},{\"color\":1,\"kind\":\"FU\"},{},{},{},{},{\"color\":0,\"kind\":\"HI\"},{\"color\":0,\"kind\":\"KE\"}],[{\"color\":1,\"kind\":\"GI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"GI\"}],[{\"color\":1,\"kind\":\"KI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KI\"}],[{\"color\":1,\"kind\":\"OU\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"OU\"}],[{\"color\":1,\"kind\":\"KI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KI\"}],[{\"color\":1,\"kind\":\"GI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{},{},{\"color\":0,\"kind\":\"GI\"}],[{\"color\":1,\"kind\":\"KE\"},{\"color\":1,\"kind\":\"HI\"},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{\"color\":0,\"kind\":\"KA\"},{\"color\":0,\"kind\":\"KE\"}],[{\"color\":1,\"kind\":\"KY\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KY\"}]],\"hands\":[{},{}]},\"move\":{\"from\":{\"x\":8,\"y\":8},\"to\":{\"x\":7,\"y\":7}}}"
-jsonRulesVariations =
+jsonRulesVariationMove =
   "{\"shogi\":{\"rule\":{\"AbilityProxy\": \"normal\", \"Effector\": \"nuclear\", \"Mover\": \"normal\", \"MoverPredicator\": \"madras\", \"Slicer\": \"donut\", \"Judge\": \"mate\"}, \"color\":0,\"board\":[[{\"color\":1,\"kind\":\"KY\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KY\"}],[{\"color\":1,\"kind\":\"KE\"},{\"color\":1,\"kind\":\"KA\"},{\"color\":1,\"kind\":\"FU\"},{},{},{},{},{\"color\":0,\"kind\":\"HI\"},{\"color\":0,\"kind\":\"KE\"}],[{\"color\":1,\"kind\":\"GI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"GI\"}],[{\"color\":1,\"kind\":\"KI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KI\"}],[{\"color\":1,\"kind\":\"OU\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"OU\"}],[{\"color\":1,\"kind\":\"KI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KI\"}],[{\"color\":1,\"kind\":\"GI\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{},{},{\"color\":0,\"kind\":\"GI\"}],[{\"color\":1,\"kind\":\"KE\"},{\"color\":1,\"kind\":\"HI\"},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{\"color\":0,\"kind\":\"KA\"},{\"color\":0,\"kind\":\"KE\"}],[{\"color\":1,\"kind\":\"KY\"},{},{\"color\":1,\"kind\":\"FU\"},{},{},{},{\"color\":0,\"kind\":\"FU\"},{},{\"color\":0,\"kind\":\"KY\"}]],\"hands\":[{},{}]},\"move\":{\"from\":{\"x\":8,\"y\":8},\"to\":{\"x\":7,\"y\":7}}}"
 
 spec :: Spec
 spec = do
-  describe "Request" $ do
-    it "initial - (7,7) - (2,7). Usual shogi"$ parse jsonNormalRules `shouldSatisfy` isJust
-    it "initial - (7,7) - (2,7). Shogi variation"$ parse jsonRulesVariations `shouldSatisfy` isJust
+  describe "InitialBoardRequest" $ do
+    it "initial board. Usual shogi"$ parseInitialBoardRequest jsonNormalRules `shouldSatisfy` isJust
+    it "initial board. Shogi variation"$ parseInitialBoardRequest jsonRulesVariation `shouldSatisfy` isJust
+  describe "MoveRequest" $ do
+    it "move - (7,7) - (2,7). Usual shogi"$ parseMoveRequest jsonNormalRulesMove `shouldSatisfy` isJust
+    it "move - (7,7) - (2,7). Shogi variation"$ parseMoveRequest jsonRulesVariationMove `shouldSatisfy` isJust
   describe "Move" $ do
     it "7776" $
       decode "{\"from\":{\"x\":7,\"y\":7},\"to\":{\"x\":7,\"y\":6}}" `shouldBe`
@@ -76,8 +84,13 @@ spec = do
     it "should contain rule" $ responseString `shouldContain` "\"rule\":{"
     it "should contain AbilityProxy" $ responseString `shouldContain` "\"AbilityProxy\":"
     it "should contain object AbilityProxy" $ responseString `shouldNotContain` "\"AbilityProxy\":{"
-  describe "serve" $ do
-    it "initial - (7,7) - (2,7). Usual shogi" $
-      BS.take 8 (serve jsonNormalRules) `shouldBe` "{\"next\":"
-    it "initial - (7,7) - (2,7). Shogi variation" $
-      BS.take 8 (serve jsonRulesVariations) `shouldBe` "{\"next\":"
+  describe "serve initial board" $ do
+    it "initial board. Usual shogi" $
+      BS.take 8 (serveInitialBoard jsonNormalRules) `shouldBe` "{\"next\":"
+    it "initial board. Shogi variation" $
+      BS.take 8 (serveInitialBoard jsonRulesVariation) `shouldBe` "{\"next\":"
+  describe "serve move" $ do
+    it "move - (7,7) - (2,7). Usual shogi" $
+      BS.take 8 (serveMove jsonNormalRulesMove) `shouldBe` "{\"next\":"
+    it "move - (7,7) - (2,7). Shogi variation" $
+      BS.take 8 (serveMove jsonRulesVariationMove) `shouldBe` "{\"next\":"
