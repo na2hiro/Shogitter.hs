@@ -4,8 +4,8 @@ module Board.Mover
   , getMoverById
   ) where
 
-import Data.Maybe (maybeToList)
 import Board
+import Data.Maybe (maybeToList)
 import Piece (Piece(..), promote)
 
 movers :: [Mover]
@@ -16,7 +16,11 @@ normalMover = Mover {runMover = move, moverId = "normal"}
     move _ (Move from to promoted) board = (effect from to board', kinds)
       where
         Just fromPiece = get board from
-        toPiece = Just $ promote promoted fromPiece
+        toPiece =
+          Just $
+          if promoted
+            then promote True fromPiece
+            else fromPiece
         kinds = map getKind $ maybeToList $ get board to
         getKind (Piece _ _ kind) = kind
         board' = sets board [(from, Nothing), (to, toPiece)]

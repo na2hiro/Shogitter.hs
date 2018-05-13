@@ -15,6 +15,7 @@ import Piece
   , Piece(..)
   , Promoted
   , moveDefs
+  , promotable
   , uniqueMoveDef
   )
 
@@ -57,8 +58,10 @@ data Mover = Mover
   { moverId :: String
   , runMover :: Color -> Move -> Board -> (Board, [Kind])
   }
+
 instance Eq Mover where
-    a1 == a2 = moverId a1 == moverId a2
+  a1 == a2 = moverId a1 == moverId a2
+
 move :: Color -> Move -> Board -> (Board, [Kind])
 move color move board = runMover (getMover board) color move board
 
@@ -69,7 +72,8 @@ data Effector = Effector
   }
 
 instance Eq Effector where
-    a1 == a2 = effectorId a1 == effectorId a2
+  a1 == a2 = effectorId a1 == effectorId a2
+
 effect :: Coord -> Coord -> Board -> Board
 effect from to board = runEffector (getEffector board) from to board
 
@@ -82,7 +86,7 @@ data AbilityProxy = AbilityProxy
   }
 
 instance Eq AbilityProxy where
-    a1 == a2 = abilityProxyId a1 == abilityProxyId a2
+  a1 == a2 = abilityProxyId a1 == abilityProxyId a2
 
 abilityProxy :: Color -> Coord -> Board -> [(Promoted, Kind)]
 abilityProxy color from board =
@@ -95,7 +99,7 @@ data Slicer = Slicer
   }
 
 instance Eq Slicer where
-    a1 == a2 = slicerId a1 == slicerId a2
+  a1 == a2 = slicerId a1 == slicerId a2
 
 sliceAsCoord :: Board -> Coord -> Coord -> [Coord]
 sliceAsCoord board base vec = runSliceAsCoord (getSlicer board) board base vec
@@ -130,7 +134,7 @@ data MoverPredicator = MoverPredicator
   }
 
 instance Eq MoverPredicator where
-    a1 == a2 = moverPredicatorId a1 == moverPredicatorId a2
+  a1 == a2 = moverPredicatorId a1 == moverPredicatorId a2
 
 canMove :: Board -> (Coord, Piece) -> Bool
 canMove board pair = runMoverPredicator (getMoverPredicator board) board pair
@@ -154,6 +158,7 @@ initialArray = fromList . concat . transpose $ gote ++ replicate 3 four ++ sente
         (reverse . map (fmap (\(Piece _ _ kind) -> Piece Black False kind)))
         gote
 
+-- | Get a piece. This fails when there is no piece found
 unsafeGet :: Board -> Coord -> Piece
 unsafeGet b c =
   let Just p = get b c
@@ -212,14 +217,18 @@ getMovesEach board (kindsB, kindsW) = foldr f ([], []) $ cells board
     f (from, Just (Piece White _ _)) (bs, ws) =
       (bs, getMovesFrom board from ++ ws)
 
+-- | Get moves from coord. This fails when there is no piece found.
 getMovesFrom :: Board -> Coord -> [Move]
 getMovesFrom board from = getMovesFrom' board from $ unsafeGet board from
 
 getMovesFrom' :: Board -> Coord -> Piece -> [Move]
-getMovesFrom' board from p@(Piece color _ _) = do
+getMovesFrom' board from p@(Piece color promoted kind) = do
   guard $ canMove board (from, p)
   dest <- destinationsAt board from
-  if canPromote color board from || canPromote color board dest
+  let kindPromotable = promotable kind
+  let coordPromotable =
+        canPromote color board from || canPromote color board dest
+  if not promoted && kindPromotable && coordPromotable
     then map (Move from dest) [True, False]
     else return $ Move from dest False
 

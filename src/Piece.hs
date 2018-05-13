@@ -6,6 +6,7 @@ module Piece
   , Kind(..)
   , Piece(..)
   , moveDefs
+  , promotable
   , promote
   , promoteReverse
   , uniqueMoveDef
@@ -68,11 +69,11 @@ data Piece =
 
 promote :: Promoted -> Piece -> Piece
 promote promoted (Piece color _ kind) =
-  Piece color (canPromote kind && promoted) kind
+  Piece color (promotable kind && promoted) kind
 
 promoteReverse :: Piece -> Piece
 promoteReverse (Piece color promoted kind) =
-  Piece color (canPromote kind && not promoted) kind
+  Piece color (promotable kind && not promoted) kind
 
 instance Show Piece where
   show (Piece color promoted kind) = show color ++ showKind promoted kind
@@ -104,10 +105,10 @@ fromJKFKind "UM" = (True, KA)
 fromJKFKind "RY" = (True, HI)
 fromJKFKind k = (False, read k)
 
-canPromote :: Kind -> Bool
-canPromote OU = False
-canPromote KI = False
-canPromote _ = True
+promotable :: Kind -> Bool
+promotable OU = False
+promotable KI = False
+promotable _ = True
 
 uniqueMoveDef :: [MoveDef] -> [MoveDef]
 uniqueMoveDef a = uniq $ sort a

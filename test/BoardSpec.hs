@@ -54,6 +54,19 @@ spec = do
            it "initial White Both" $
              getMoves White initial [HI] `shouldMatchList` snd initialBothEach
     -- TODO: Use QuickCheck
+  describe "getMovesFrom" $ do
+    it "(1,1) TO has 2 moves with promote:False" $
+      let boardWithPromotedPiece =
+            set initial (Coord 1 1, Just $ Piece Black True FU)
+          from = Coord 1 1
+       in do getMovesFrom boardWithPromotedPiece from `shouldMatchList`
+               [Move from (Coord 1 2) False, Move from (Coord 2 1) False]
+    it "(1,1) KI has 2 moves with promote:False" $
+      let boardWithPromotedPiece =
+            set initial (Coord 1 1, Just $ Piece Black False KI)
+          from = Coord 1 1
+       in do getMovesFrom boardWithPromotedPiece from `shouldMatchList`
+               [Move from (Coord 1 2) False, Move from (Coord 2 1) False]
   describe "coordToInt. intToCoord == id" $
     let b = initialBoard {size = (2, 3)}
      in do it "initial Black" $
